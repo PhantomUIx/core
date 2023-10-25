@@ -2,12 +2,39 @@ const std = @import("std");
 const vizops = @import("vizops");
 const Vector = vizops.Vector(2, usize);
 
-pub fn BaseRuntimeSized(comptime T: type) type {
+pub const Options = struct {
+    element: type = u8,
+    size: ?Vector = null,
+    depth: ?usize = null,
+    @"volatile": bool = false,
+
+    pub fn arrayType(comptime options: Options) type {
+        var t: type = [*]options.element;
+        if (options.size) |size| {
+            const depth = if (options.depth) |depth| depth else @typeInfo(options.element).Int.bits;
+            const asize = size.value[0] * size.value[1] * depth;
+            t = *[asize]options.element;
+        }
+
+        if (options.@"volatile") {
+            var info = @typeInfo(t).Pointer;
+            info.is_volatile = true;
+            t = @Type(.{
+                .Pointer = info,
+            });
+        }
+        return t;
+    }
+};
+
+pub fn Base(comptime options: Options) type {
     return struct {
         const Self = @This();
 
+        pub const ArrayType = options.arrayType();
+
         pub const VTable = struct {
-            data: *const fn (*anyopaque) [*]T,
+            data: *const fn (*anyopaque) ArrayType,
             size: *const fn (*anyopaque) Vector,
             depth: *const fn (*anyopaque) usize,
         };
@@ -15,44 +42,16 @@ pub fn BaseRuntimeSized(comptime T: type) type {
         ptr: *anyopaque,
         vtable: *const VTable,
 
-        pub inline fn data(self: Self) [*]T {
+        pub inline fn data(self: Self) ArrayType {
             return self.vtable.data(self.ptr);
         }
 
         pub inline fn size(self: Self) Vector {
-            return self.vtable.size(self.ptr);
+            return options.size orelse self.vtable.size(self.ptr);
         }
 
         pub inline fn depth(self: Self) usize {
-            return self.vtable.depth(self.ptr);
+            return options.depth or self.vtable.depth(self.ptr);
         }
     };
 }
-
-pub fn BaseComptimeSized(comptime T: type) type {
-    return struct {
-        const Self = @This();
-
-        pub const VTable = struct {
-            data: *const fn (*anyopaque) [*]T,
-            size: *const fn (*anyopaque) Vector,
-        };
-
-        ptr: *anyopaque,
-        vtable: *const VTable,
-
-        pub inline fn data(self: Self) [*]T {
-            return self.vtable.data(self.ptr);
-        }
-
-        pub inline fn size(self: Self) Vector {
-            return self.vtable.size(self.ptr);
-        }
-
-        pub inline fn depth(_: Self) usize {
-            return std.math.maxInt(T);
-        }
-    };
-}
-
-pub const Base = BaseRuntimeSized(u8);

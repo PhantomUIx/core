@@ -19,7 +19,7 @@ ptr: *anyopaque,
 list: RegionList,
 vtable: *const Base.VTable,
 
-pub fn init(ptr: *anyopaque, vtable: *const Base.VTable, alloc: Allocator) Base {
+pub fn init(ptr: *anyopaque, vtable: *const Base.VTable, alloc: Allocator) Damaged {
     return .{
         .ptr = ptr,
         .list = RegionList.init(alloc),
@@ -31,7 +31,7 @@ pub fn deinit(self: *Damaged) void {
     self.list.deinit();
 }
 
-pub fn base(self: *Damaged) Base {
+pub fn base(self: *Damaged, comptime options: Base.Options) Base.Base(options) {
     return .{
         .ptr = self,
         .vtable = &.{
@@ -53,7 +53,7 @@ fn depth(ctx: *anyopaque) u8 {
     return self.vtable.depth(self.ptr);
 }
 
-fn damage(self: *Base, op: Base.Operation) ?Region {
+fn damage(self: *Damaged, op: Base.Operation) ?Region {
     return switch (op) {
         .rect => |r| .{
             .pos = r.pos,
@@ -72,13 +72,13 @@ fn damage(self: *Base, op: Base.Operation) ?Region {
 }
 
 fn draw(ctx: *anyopaque, op: Base.Operation) anyerror!void {
-    const self: *Base = @ptrCast(@alignCast(ctx));
+    const self: *Damaged = @ptrCast(@alignCast(ctx));
     if (self.damage(op)) |region| try self.list.append(region);
     return self.vtable.draw(self.ptr, op);
 }
 
 fn composite(ctx: *anyopaque, pos: Vector, mode: Base.CompositeMode, image: anytype) anyerror!void {
-    const self: *Base = @ptrCast(@alignCast(ctx));
+    const self: *Damaged = @ptrCast(@alignCast(ctx));
 
     try self.list.append(.{
         .pos = pos,
