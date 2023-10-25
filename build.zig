@@ -35,5 +35,6 @@ pub fn build(b: *std.Build) void {
     });
 
     exe_example.addModule("phantom", phantom);
+    exe_example.addModule("vizops", vizops.module("vizops"));
     b.installArtifact(exe_example);
 }

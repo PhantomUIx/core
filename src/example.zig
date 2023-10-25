@@ -1,22 +1,27 @@
 const std = @import("std");
 const phantom = @import("phantom");
+const vizops = @import("vizops");
 
-fn printDecl(comptime T: type) void {
-    inline for (@typeInfo(T).Struct.decls) |decl| {
-        const field = @field(T, decl.name);
-        const fieldInfo = @typeInfo(@TypeOf(field));
+const displaySize = vizops.Vector(2, usize).init(.{ 600, 400 });
+const depth = 24;
 
-        switch (fieldInfo) {
-            .Fn => std.debug.print("{s}\n", .{decl.name}),
-            .Struct => {
-                std.debug.print("{}\n", .{field});
-                printDecl(field);
-            },
-            else => std.debug.print("{}\n", .{field}),
-        }
-    }
-}
+const FrameBuffer = phantom.fb.Allocated(.{
+    .size = displaySize,
+    .depth = depth,
+});
 
-pub fn main() void {
-    printDecl(phantom.paint);
+const BaseCanvas = phantom.Canvas(.{
+    .size = displaySize,
+    .depth = depth,
+});
+
+pub fn main() !void {
+    var fb = try FrameBuffer.init(std.heap.page_allocator);
+    defer fb.deinit();
+
+    const canvas = phantom.canvas.FrameBuffer(FrameBuffer.Base, BaseCanvas){
+        .fb = fb.framebuffer(),
+    };
+
+    std.debug.print("{}\n", .{canvas});
 }
