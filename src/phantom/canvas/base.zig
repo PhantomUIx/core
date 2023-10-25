@@ -1,3 +1,5 @@
+const paint = @import("../paint.zig");
+
 const vizops = @import("vizops");
 const Vector = vizops.vector.Vector2(usize);
 const Color = vizops.vector.Float32Vector4;
@@ -7,46 +9,11 @@ pub const Options = struct {
     depth: ?usize = null,
 };
 
-pub const FillMode = union(enum) {
-    fill: void,
-    border: usize,
-};
-
-pub const CompositeMode = enum {
-    source,
-    xor,
-    add,
-    multiply,
-};
-
-pub const Operation = union(enum) {
-    rect: struct {
-        fill: FillMode,
-        pos: Vector,
-        size: Vector,
-        color: Color,
-    },
-    circle: struct {
-        fill: FillMode,
-        pos: Vector,
-        rad: f32,
-    },
-    line: struct {
-        depth: usize,
-        start: Vector,
-        end: Vector,
-        color: Color,
-    },
-    clear: struct {
-        color: Color,
-    },
-};
-
 pub const VTable = struct {
     size: *const fn (*anyopaque) Vector,
     depth: *const fn (*anyopaque) u8,
-    draw: *const fn (*anyopaque, Operation) anyerror!void,
-    composite: *const fn (*anyopaque, Vector, CompositeMode, anytype) anyerror!void,
+    draw: *const fn (*anyopaque, paint.Operation) anyerror!void,
+    composite: *const fn (*anyopaque, Vector, paint.CompositeMode, anytype) anyerror!void,
 };
 
 pub fn Base(comptime options: Options) type {
@@ -64,11 +31,11 @@ pub fn Base(comptime options: Options) type {
             return options.depth or self.vtable.depth(self.ptr);
         }
 
-        pub inline fn draw(self: Self, op: Operation) anyerror!void {
+        pub inline fn draw(self: Self, op: paint.Operation) anyerror!void {
             return self.vtable.draw(self.ptr, op);
         }
 
-        pub inline fn composite(self: Self, pos: Vector, mode: CompositeMode, image: anytype) anyerror!void {
+        pub inline fn composite(self: Self, pos: Vector, mode: paint.CompositeMode, image: anytype) anyerror!void {
             return self.vtable.composite(self.ptr, pos, mode, image);
         }
     };

@@ -18,5 +18,5 @@ fn printDecl(comptime T: type) void {
 }
 
 pub fn main() void {
-    printDecl(phantom);
+    printDecl(phantom.paint);
 }

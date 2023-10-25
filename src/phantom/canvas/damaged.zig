@@ -5,7 +5,11 @@ const vizops = @import("vizops");
 const Vector = vizops.vector.Vector2(usize);
 const Color = vizops.vector.Float32Vector4;
 
-const Base = @import("base.zig");
+const paint = @import("../paint.zig");
+
+const base = @import("base.zig");
+const Base = base.Base;
+
 const Damaged = @This();
 
 pub const Region = struct {
@@ -17,7 +21,7 @@ pub const RegionList = std.ArrayList(Region);
 
 ptr: *anyopaque,
 list: RegionList,
-vtable: *const Base.VTable,
+vtable: *const base.VTable,
 
 pub fn init(ptr: *anyopaque, vtable: *const Base.VTable, alloc: Allocator) Damaged {
     return .{
@@ -31,7 +35,7 @@ pub fn deinit(self: *Damaged) void {
     self.list.deinit();
 }
 
-pub fn base(self: *Damaged, comptime options: Base.Options) Base.Base(options) {
+pub fn canvas(self: *Damaged, comptime options: base.Options) Base(options) {
     return .{
         .ptr = self,
         .vtable = &.{
@@ -53,7 +57,7 @@ fn depth(ctx: *anyopaque) u8 {
     return self.vtable.depth(self.ptr);
 }
 
-fn damage(self: *Damaged, op: Base.Operation) ?Region {
+fn damage(self: *Damaged, op: paint.Operation) ?Region {
     return switch (op) {
         .rect => |r| .{
             .pos = r.pos,
@@ -71,13 +75,13 @@ fn damage(self: *Damaged, op: Base.Operation) ?Region {
     };
 }
 
-fn draw(ctx: *anyopaque, op: Base.Operation) anyerror!void {
+fn draw(ctx: *anyopaque, op: paint.Operation) anyerror!void {
     const self: *Damaged = @ptrCast(@alignCast(ctx));
     if (self.damage(op)) |region| try self.list.append(region);
     return self.vtable.draw(self.ptr, op);
 }
 
-fn composite(ctx: *anyopaque, pos: Vector, mode: Base.CompositeMode, image: anytype) anyerror!void {
+fn composite(ctx: *anyopaque, pos: Vector, mode: paint.CompositeMode, image: anytype) anyerror!void {
     const self: *Damaged = @ptrCast(@alignCast(ctx));
 
     try self.list.append(.{
