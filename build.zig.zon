@@ -1,0 +1,11 @@
+.{
+  .name = "phantom",
+  .version = "0.1.0",
+  .paths = .{"."},
+  .dependencies = .{
+    .vizops = .{
+      .url = "https://github.com/MidstallSoftware/vizops/archive/5e9568446b78592085b23ce098b2685f58e96e4c.tar.gz",
+      .hash = "12206ba26de9da6025de6dde9967b2d80632b1970db2db1a09c359c2a36629795a96",
+    },
+  },
+}
