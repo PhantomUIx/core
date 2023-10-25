@@ -38,6 +38,7 @@ pub fn base(self: *Damaged) Base {
             .size = size,
             .depth = depth,
             .draw = draw,
+            .composite = composite,
         },
     };
 }
@@ -70,8 +71,19 @@ fn damage(self: *Base, op: Base.Operation) ?Region {
     };
 }
 
-fn draw(ctx: *anyopaque, op: Base.Operation) void {
+fn draw(ctx: *anyopaque, op: Base.Operation) anyerror!void {
     const self: *Base = @ptrCast(@alignCast(ctx));
-    if (self.damage(op)) |region| self.list.append(region) catch @panic("Out of memory");
+    if (self.damage(op)) |region| try self.list.append(region);
     return self.vtable.draw(self.ptr, op);
+}
+
+fn composite(ctx: *anyopaque, pos: Vector, mode: Base.CompositeMode, image: anytype) anyerror!void {
+    const self: *Base = @ptrCast(@alignCast(ctx));
+
+    try self.list.append(.{
+        .pos = pos,
+        .size = image.size(),
+    });
+
+    return self.vtable.composite(self.ptr, pos, mode, image);
 }

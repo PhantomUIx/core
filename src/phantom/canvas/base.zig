@@ -9,6 +9,13 @@ pub const FillMode = union(enum) {
     border: usize,
 };
 
+pub const CompositeMode = enum {
+    source,
+    xor,
+    add,
+    multiply,
+};
+
 pub const Operation = union(enum) {
     rect: struct {
         fill: FillMode,
@@ -35,7 +42,8 @@ pub const Operation = union(enum) {
 pub const VTable = struct {
     size: *const fn (*anyopaque) Vector,
     depth: *const fn (*anyopaque) u8,
-    draw: *const fn (*anyopaque, Operation) void,
+    draw: *const fn (*anyopaque, Operation) anyerror!void,
+    composite: *const fn (*anyopaque, Vector, CompositeMode, anytype) anyerror!void,
 };
 
 ptr: *anyopaque,
@@ -49,6 +57,10 @@ pub inline fn depth(self: Base) u8 {
     return self.vtable.depth(self.ptr);
 }
 
-pub inline fn draw(self: Base, op: Operation) void {
+pub inline fn draw(self: Base, op: Operation) anyerror!void {
     return self.vtable.draw(self.ptr, op);
+}
+
+pub inline fn composite(self: Base, pos: Vector, mode: CompositeMode, image: anytype) anyerror!void {
+    return self.vtable.composite(self.ptr, pos, mode, image);
 }
