@@ -13,26 +13,27 @@ pub fn Allocated(comptime options: base.Options) type {
         pub const Base = base.Base(options);
 
         allocator: Allocator,
-        buffer: []options.element,
+        buffer: options.arrayType(),
         size: Vector = options.size orelse undefined,
         depth: usize = options.depth orelse undefined,
 
         pub usingnamespace if (options.size) |size|
-            if (options.depth) |depth|
+            if (options.depth) |_|
                 struct {
                     pub fn init(alloc: Allocator) Allocator.Error!Self {
                         return .{
                             .allocator = alloc,
-                            .buffer = try alloc.alloc(options.element, size.value[0] * size.value[1] * depth),
+                            .buffer = try alloc.create(@typeInfo(options.arrayType()).Pointer.child),
                         };
                     }
                 }
             else
                 struct {
                     pub fn init(alloc: Allocator, depth: usize) Allocator.Error!Self {
+                        const asize = size.value[0] * size.value[1] * (depth / 8);
                         return .{
                             .allocator = alloc,
-                            .buffer = try alloc.alloc(options.element, size.value[0] * size.value[1] * depth),
+                            .buffer = (try alloc.alloc(options.element, asize))[0..asize],
                             .depth = depth,
                         };
                     }
@@ -42,7 +43,7 @@ pub fn Allocated(comptime options: base.Options) type {
                 pub fn init(alloc: Allocator, size: Vector, depth: usize) Allocator.Error!Self {
                     return .{
                         .allocator = alloc,
-                        .buffer = try alloc.alloc(options.element, size.value[0] * size.value[1] * depth),
+                        .buffer = try alloc.alloc(options.element, size.value[0] * size.value[1] * (depth / 8)),
                         .size = size,
                         .depth = depth,
                     };
@@ -66,11 +67,7 @@ pub fn Allocated(comptime options: base.Options) type {
 
         fn impl_data(ctx: *anyopaque) options.arrayType() {
             const self: *Self = @ptrCast(@alignCast(ctx));
-            return if (options.size) |size| blk: {
-                const depth = (if (options.depth) |depth| depth else @typeInfo(options.element).Int.bits) / 8;
-                const asize = size.value[0] * size.value[1] * depth;
-                break :blk self.buffer[0..asize];
-            } else self.buffer;
+            return self.buffer;
         }
 
         fn impl_size(ctx: *anyopaque) Vector {

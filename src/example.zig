@@ -8,7 +8,6 @@ const depth = 24;
 const FrameBuffer = phantom.fb.Allocated(.{
     .size = displaySize,
     .depth = depth,
-    .element = @Vector(3, f32),
 });
 
 const BaseCanvas = phantom.Canvas(.{
@@ -19,6 +18,8 @@ const BaseCanvas = phantom.Canvas(.{
 pub fn main() !void {
     var fb = try FrameBuffer.init(std.heap.page_allocator);
     defer fb.deinit();
+
+    @memset(fb.buffer, 0);
 
     const canvas = phantom.canvas.FrameBuffer(FrameBuffer.Base, BaseCanvas){
         .fb = fb.framebuffer(),
