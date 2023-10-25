@@ -13,7 +13,12 @@ pub const Options = struct {
         if (options.size) |size| {
             const depth = (if (options.depth) |depth| depth else @typeInfo(options.element).Int.bits) / 8;
             const asize = size.value[0] * size.value[1] * depth;
-            t = *[asize]options.element;
+
+            if (std.meta.activeTag(@typeInfo(@TypeOf(asize))) == .ComptimeInt) {
+                t = @Vector(asize, options.element);
+            } else {
+                t = *[asize]options.element;
+            }
         }
 
         if (options.@"volatile") {

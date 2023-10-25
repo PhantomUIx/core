@@ -8,6 +8,7 @@ const depth = 24;
 const FrameBuffer = phantom.fb.Allocated(.{
     .size = displaySize,
     .depth = depth,
+    .element = @Vector(3, f32),
 });
 
 const BaseCanvas = phantom.Canvas(.{
