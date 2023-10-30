@@ -6,6 +6,7 @@ pub const FrameInfo = struct {
     size: struct {
         phys: vizops.vector.Vector2(usize),
         res: vizops.vector.Vector2(usize),
+        avail: vizops.vector.Vector2(usize),
     },
     scale: vizops.vector.Float32Vector2,
     depth: u8,
@@ -14,9 +15,18 @@ pub const FrameInfo = struct {
         return std.simd.countTrues(@Vector(4, bool){
             std.simd.countTrues(self.size.phys.value == other.size.phys.value) == 2,
             std.simd.countTrues(self.size.res.value == other.size.res.value) == 2,
+            std.simd.countTrues(self.size.avail.value == other.size.avail.value) == 2,
             std.simd.countTrues(self.scale.value == other.scale.value) == 2,
             self.depth == other.depth,
         }) == 4;
+    }
+
+    pub fn child(self: FrameInfo, availSize: vizops.vector.Vector2(usize)) FrameInfo {
+        return .{ .size = .{
+            .phys = self.size.phys,
+            .res = self.size.res,
+            .avail = availSize,
+        }, .scale = self.scale, .depth = self.depth };
     }
 };
 

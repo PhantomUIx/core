@@ -28,9 +28,10 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) Node.State {
     var size = vizops.vector.Vector2(usize).zero();
 
     for (self.children.items) |child| {
-        const cstate = child.node.state(frameInfo);
-        // TODO: change size adjustment based on position
-        size = size.add(cstate.size);
+        const cstate = child.node.state(frameInfo.child(frameInfo.size.avail.sub(size)));
+
+        size.set(0, std.math.max(size.get(0), child.pos.get(0) + cstate.size.get(0)));
+        size.set(1, std.math.max(size.get(1), child.pos.get(1) + cstate.size.get(1)));
     }
 
     return .{
@@ -45,9 +46,10 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo) Node.State {
     var size = vizops.vector.Vector2(usize).zero();
 
     for (self.children.items) |child| {
-        const cstate = child.node.preFrame(frameInfo);
-        // TODO: change size adjustment based on position
-        size = size.add(cstate.size);
+        const cstate = child.node.preFrame(frameInfo.child(frameInfo.size.avail.sub(size)));
+
+        size.set(0, std.math.max(size.get(0), child.pos.get(0) + cstate.size.get(0)));
+        size.set(1, std.math.max(size.get(1), child.pos.get(1) + cstate.size.get(1)));
     }
 
     return .{
