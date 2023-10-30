@@ -1,11 +1,14 @@
 const std = @import("std");
+const options = @import("options");
 const phantom = @import("phantom");
 const vizops = @import("vizops");
+
+const backend: phantom.scene.BackendType = @enumFromInt(@intFromEnum(options.backend));
 
 pub fn main() !void {
     const alloc = std.heap.page_allocator;
 
-    var scene = phantom.scene.backends.headless.Scene{
+    var scene = phantom.scene.Backend(backend).Scene{
         .frame_info = phantom.scene.Node.FrameInfo.init(.{
             .res = vizops.vector.Vector2(usize).init(.{ 1024, 768 }),
             .scale = vizops.vector.Float32Vector2.init(.{ 1.0, 1.0 }),
@@ -18,5 +21,5 @@ pub fn main() !void {
 
     _ = try @constCast(&scene.scene()).frame(@constCast(&tree.node));
 
-    std.debug.print("{}\n{}\n{}\n", .{ scene, tree, phantom.scene.BackendType });
+    std.debug.print("{}\n{}\n", .{ scene, tree });
 }

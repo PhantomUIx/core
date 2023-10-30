@@ -1,9 +1,13 @@
 const std = @import("std");
+const metap = @import("metaplus").@"meta+";
+
+pub const BackendType = metap.enums.fromDecls(@import("src/phantom/scene/backends.zig"));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const no_docs = b.option(bool, "no-docs", "skip installing documentation") orelse false;
+    const backend = b.option(BackendType, "backend", "The backend to use for the example") orelse .headless;
 
     const vizops = b.dependency("vizops", .{
         .target = target,
@@ -57,6 +61,9 @@ pub fn build(b: *std.Build) void {
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
 
+    const exe_options = b.addOptions();
+    exe_options.addOption(BackendType, "backend", backend);
+
     const exe_example = b.addExecutable(.{
         .name = "example",
         .root_source_file = .{
@@ -68,6 +75,7 @@ pub fn build(b: *std.Build) void {
 
     exe_example.addModule("phantom", phantom);
     exe_example.addModule("vizops", vizops.module("vizops"));
+    exe_example.addOptions("options", exe_options);
     b.installArtifact(exe_example);
 
     if (!no_docs) {
