@@ -29,5 +29,7 @@ pub fn main() !void {
 
     _ = try @constCast(&scene.scene()).frame(@constCast(&tree.node));
 
-    std.debug.print("{}\n{}\n", .{ scene, tree });
+    const availSize = @constCast(&scene.scene()).frameInfo().size.res.sub(tree.node.last_state.?.size);
+
+    std.debug.print("Scene has {} horizontal pixels and {} vertical pixels left over\n", .{ availSize.value[0], availSize.value[1] });
 }
