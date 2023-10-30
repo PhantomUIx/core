@@ -120,8 +120,8 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     for (self.children.items) |child| {
         const cstate = try child.node.state(frameInfo.child(frameInfo.size.avail.sub(size)));
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
+            @intFromFloat(child.pos.value[0] * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
         size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
@@ -152,8 +152,8 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
         const cframeInfo = frameInfo.child(frameInfo.size.avail.sub(size));
         const cstate = try child.node.state(cframeInfo);
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
+            @intFromFloat(child.pos.value[0] * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
         _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(pos, cstate.size)));
@@ -183,8 +183,8 @@ fn frame(ctx: *anyopaque, scene: *Scene) anyerror!void {
 
     for (self.children.items) |child| {
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
+            @intFromFloat(child.pos.value[0] * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
         try child.node.frame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
@@ -197,8 +197,8 @@ fn postFrame(ctx: *anyopaque, scene: *Scene) anyerror!void {
 
     for (self.children.items) |child| {
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
+            @intFromFloat(child.pos.value[0] * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
         try child.node.postFrame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
