@@ -16,12 +16,27 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    const metaplus = b.dependency("metaplus", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    _ = b.addModule("meta+", .{
+        .source_file = .{
+            .path = metaplus.builder.pathFromRoot(metaplus.module("meta+").source_file.path),
+        },
+    });
+
     const phantom = b.addModule("phantom", .{
         .source_file = .{ .path = b.pathFromRoot("src/phantom.zig") },
         .dependencies = &.{
             .{
                 .name = "vizops",
                 .module = vizops.module("vizops"),
+            },
+            .{
+                .name = "meta+",
+                .module = metaplus.module("meta+"),
             },
         },
     });
@@ -37,6 +52,7 @@ pub fn build(b: *std.Build) void {
     });
 
     unit_tests.addModule("vizops", vizops.module("vizops"));
+    unit_tests.addModule("meta+", metaplus.module("meta+"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);

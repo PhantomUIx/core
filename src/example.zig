@@ -18,5 +18,5 @@ pub fn main() !void {
 
     _ = try @constCast(&scene.scene()).frame(@constCast(&tree.node));
 
-    std.debug.print("{}\n{}\n", .{ scene, tree });
+    std.debug.print("{}\n{}\n{}\n", .{ scene, tree, phantom.scene.BackendType });
 }

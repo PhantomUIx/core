@@ -7,5 +7,9 @@
       .url = "https://github.com/MidstallSoftware/vizops/archive/3d4e7363615b6c01146d1962d87f2a4b6f0fb479.tar.gz",
       .hash = "1220612c696a15144acf382e2d36e7637621b61dd29fa2029c9f9a45f02be6590e4d",
     },
+    .metaplus = .{
+      .url = "https://github.com/MidstallSoftware/meta-plus/archive/62a33d8b909db07ac7b7390a20868fdcfc641d6d.tar.gz",
+      .hash = "1220e7867f67a8f3783dc05d66d0da21903f6d54fd96dcf0d63c5466fc2493b4ee34",
+    },
   },
 }
