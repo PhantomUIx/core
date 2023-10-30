@@ -32,23 +32,34 @@ pub const FrameInfo = struct {
 };
 
 pub const VTable = struct {
-    state: *const fn (*anyopaque, FrameInfo) State,
-    preFrame: *const fn (*anyopaque, FrameInfo, *Scene) State,
-    frame: *const fn (*anyopaque, *Scene) void,
-    postFrame: ?*const fn (*anyopaque, *Scene) void,
-    format: ?*const fn (*anyopaque, comptime []const u8, std.fmt.FormatOptions, anytype) anyerror!void,
-    deinit: ?*const fn (*anyopaque) void,
+    dupe: *const fn (*anyopaque) anyerror!*anyopaque,
+    state: *const fn (*anyopaque, FrameInfo) anyerror!State,
+    preFrame: *const fn (*anyopaque, FrameInfo, *Scene) anyerror!State,
+    frame: *const fn (*anyopaque, *Scene) anyerror!void,
+    postFrame: ?*const fn (*anyopaque, *Scene) anyerror!void = null,
+    format: ?*const fn (*anyopaque, comptime []const u8, std.fmt.FormatOptions, anytype) anyerror!void = null,
+    deinit: ?*const fn (*anyopaque) void = null,
 };
 
 pub const State = struct {
     size: vizops.vector.Vector2(usize),
     frame_info: FrameInfo,
+    ptr: ?*anyopaque = null,
+    allocator: ?std.mem.Allocator = null,
+    ptrEqual: ?*const fn (*anyopaque, *anyopaque) bool = null,
+    ptrFree: ?*const fn (*anyopaque, std.mem.Allocator) void,
+
+    pub inline fn deinit(self: State, alloc: ?std.mem.Allocator) void {
+        return if (self.ptrFree) |f| f(self.ptr, (self.allocator orelse alloc).?);
+    }
 
     pub fn equal(self: State, other: State) bool {
-        return std.simd.countTrues(@Vector(2, bool){
+        return std.simd.countTrues(@Vector(4, bool){
             std.simd.countTrues(self.size.value == other.size.value) == 2,
-            self.frameInfo.equal(other.frameInfo),
-        }) == 2;
+            self.frameInfo.equal(other.frame_info),
+            self.ptr == other.ptr,
+            if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else true,
+        }) == 4;
     }
 };
 
@@ -56,25 +67,31 @@ vtable: *const VTable,
 ptr: *anyopaque,
 last_state: ?State = null,
 
-pub fn state(self: *Node, frameInfo: FrameInfo) State {
+pub inline fn dupe(self: *Node) anyerror!*anyopaque {
+    return self.vtable.dupe(self.ptr);
+}
+
+pub inline fn state(self: *Node, frameInfo: FrameInfo) anyerror!State {
     return if (self.last_state) |s| s else self.vtable.state(self.ptr, frameInfo);
 }
 
-pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) bool {
-    const newState = self.vtable.preFrame(self.ptr, frameInfo, scene);
+pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool {
+    const newState = try self.vtable.preFrame(self.ptr, frameInfo, scene);
     const shouldApply = !(if (self.last_state) |lastState| lastState.equal(newState) else false);
 
     if (shouldApply) {
+        if (self.last_state) |l| l.deinit();
+
         self.last_state = newState;
     }
     return shouldApply;
 }
 
-pub inline fn frame(self: *Node, scene: *Scene) void {
+pub inline fn frame(self: *Node, scene: *Scene) anyerror!void {
     return if (self.lastState != null) self.vtable.frame(self.ptr, scene) else void;
 }
 
-pub inline fn postFrame(self: *Node, scene: *Scene) void {
+pub inline fn postFrame(self: *Node, scene: *Scene) anyerror!void {
     return if (self.lastState != null) (if (self.vtable.postFrame) |f| f(self.ptr, scene) else void) else void;
 }
 
@@ -83,5 +100,6 @@ pub inline fn format(self: *Node, comptime fmt: []const u8, options: std.fmt.For
 }
 
 pub inline fn deinit(self: *Node) void {
+    if (self.last_state) |l| l.deinit(null);
     return if (self.vtable.deinit) |f| f(self.ptr) else void;
 }
