@@ -7,6 +7,27 @@ const NodeCircle = @This();
 
 pub const Options = struct {
     radius: f32,
+    color: vizops.vector.Float32Vector4,
+};
+
+const State = struct {
+    color: vizops.vector.Float32Vector4,
+
+    pub fn init(alloc: Allocator, options: Options) Allocator.Error!*State {
+        const self = try alloc.create(State);
+        self.* = .{
+            .color = options.color,
+        };
+        return self;
+    }
+
+    pub fn equal(self: *State, other: *State) bool {
+        return std.simd.countTrues(self.color.value == other.color.value) == 4;
+    }
+
+    pub fn deinit(self: *State, alloc: Allocator) void {
+        alloc.destroy(self);
+    }
 };
 
 allocator: Allocator,
@@ -32,6 +53,17 @@ pub fn new(alloc: Allocator, options: Options) Allocator.Error!*NodeCircle {
     return self;
 }
 
+fn stateEqual(ctx: *anyopaque, otherctx: *anyopaque) bool {
+    const self: *State = @ptrCast(@alignCast(ctx));
+    const other: *State = @ptrCast(@alignCast(otherctx));
+    return self.equal(other);
+}
+
+fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
+    const self: *State = @ptrCast(@alignCast(ctx));
+    self.deinit(alloc);
+}
+
 fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     return try new(self.allocator, self.options);
@@ -47,6 +79,9 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
         }),
         .frame_info = frameInfo,
         .allocator = self.allocator,
+        .ptr = try State.init(self.allocator, self.options),
+        .ptrEqual = stateEqual,
+        .ptrFree = stateFree,
     };
 }
 
@@ -60,6 +95,9 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
         }),
         .frame_info = frameInfo,
         .allocator = self.allocator,
+        .ptr = try State.init(self.allocator, self.options),
+        .ptrEqual = stateEqual,
+        .ptrFree = stateFree,
     };
 }
 

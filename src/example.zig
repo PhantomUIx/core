@@ -23,6 +23,7 @@ pub fn main() !void {
     try tree.children.append(.{
         .node = @constCast(&(try backend.NodeCircle.new(alloc, .{
             .radius = 32.0,
+            .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
         })).node),
         .pos = vizops.vector.Float32Vector2.init(.{ 0.0, 0.0 }),
     });
