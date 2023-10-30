@@ -29,10 +29,10 @@ pub inline fn frameInfo(self: *Scene) Node.FrameInfo {
     return self.vtable.frameInfo(self.ptr);
 }
 
-pub fn frame(self: *Scene, node: *Node) bool {
-    if (node.preFrame(self.frameInfo(), self)) {
-        node.frame(self);
-        node.postFrame(self);
+pub fn frame(self: *Scene, node: *Node) !bool {
+    if (try node.preFrame(self.frameInfo(), self)) {
+        try node.frame(self);
+        try node.postFrame(self);
         return true;
     }
     return false;
