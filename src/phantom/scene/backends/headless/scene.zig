@@ -2,7 +2,17 @@ const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const HeadlessScene = @This();
 
+pub const Options = struct {
+    frame_info: Node.FrameInfo,
+};
+
 frame_info: Node.FrameInfo,
+
+pub fn init(options: Options) HeadlessScene {
+    return .{
+        .frame_info = options.frame_info,
+    };
+}
 
 pub fn scene(self: *HeadlessScene) Scene {
     return .{

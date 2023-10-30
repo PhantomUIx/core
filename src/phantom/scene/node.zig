@@ -64,7 +64,7 @@ pub const State = struct {
     ptr: ?*anyopaque = null,
     allocator: ?std.mem.Allocator = null,
     ptrEqual: ?*const fn (*anyopaque, *anyopaque) bool = null,
-    ptrFree: ?*const fn (*anyopaque, std.mem.Allocator) void,
+    ptrFree: ?*const fn (*anyopaque, std.mem.Allocator) void = null,
 
     pub inline fn deinit(self: State, alloc: ?std.mem.Allocator) void {
         return if (self.ptrFree) |f| f(self.ptr.?, (self.allocator orelse alloc).?);
