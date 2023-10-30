@@ -7,7 +7,7 @@ const NodeTree = @This();
 
 pub const Child = struct {
     node: *Node,
-    pos: vizops.vector.Float32Vector,
+    pos: vizops.vector.Float32Vector2,
 };
 
 const ChildState = struct {
@@ -23,6 +23,33 @@ const ChildState = struct {
 
     pub inline fn deinit(self: ChildState, alloc: ?Allocator) void {
         return self.state.deinit(alloc);
+    }
+};
+
+const State = struct {
+    children: std.ArrayList(ChildState),
+
+    pub fn init(children: std.ArrayList(ChildState)) Allocator.Error!*State {
+        const self = try children.allocator.create(State);
+        self.* = .{
+            .children = children,
+        };
+        return self;
+    }
+
+    pub fn equal(self: *State, other: *State) bool {
+        if (self.children.items.len == other.children.items.len) {
+            for (self.children.items, other.children.items) |s, o| {
+                if (!s.equal(o)) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    pub fn deinit(self: *State) void {
+        for (self.children.items) |s| s.deinit(self.children.allocator);
+        self.children.allocator.destroy(self);
     }
 };
 
@@ -49,29 +76,20 @@ pub fn new(alloc: Allocator) Allocator.Error!*NodeTree {
 }
 
 fn stateEqual(ctx: *anyopaque, otherctx: *anyopaque) bool {
-    const states: []ChildState = @ptrCast(@alignCast(ctx));
-    const otherStates: []ChildState = @ptrCast(@alignCast(otherctx));
-
-    if (states.len == otherStates.len) {
-        for (states, otherStates) |s, os| {
-            if (!s.equal(os)) return false;
-        }
-        return true;
-    }
-    return false;
+    const self: *State = @ptrCast(@alignCast(ctx));
+    const other: *State = @ptrCast(@alignCast(otherctx));
+    return self.equal(other);
 }
 
-fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
-    const states: []ChildState = @ptrCast(@alignCast(ctx));
-
-    for (states) |s| s.deinit(alloc);
-    alloc.free(states);
+fn stateFree(ctx: *anyopaque, _: std.mem.Allocator) void {
+    const self: *State = @ptrCast(@alignCast(ctx));
+    self.deinit();
 }
 
 fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     const d = try self.children.allocator.create(NodeTree);
-    errdefer d.deinit();
+    errdefer self.children.allocator.destroy(d);
 
     d.* = .{
         .children = try std.ArrayList(Child).initCapacity(self.children.allocator, self.children.items.len),
@@ -83,9 +101,13 @@ fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
     errdefer d.children.deinit();
 
     for (self.children.items) |child| {
-        const dchild = try child.dupe();
+        const dchild = Child{
+            .node = @ptrCast(@alignCast(try child.node.dupe())),
+            .pos = child.pos,
+        };
+
         d.children.appendAssumeCapacity(dchild);
-        errdefer dchild.deinit();
+        errdefer dchild.node.deinit();
     }
     return d;
 }
@@ -98,12 +120,12 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     for (self.children.items) |child| {
         const cstate = try child.node.state(frameInfo.child(frameInfo.size.avail.sub(size)));
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intCast(child.pos.get(0) * frameInfo.size.res.get(0) / 100.0),
-            @intCast(child.pos.get(1) * frameInfo.size.res.get(1) / 100.0),
+            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
-        size.set(0, std.math.max(size.get(0), pos.get(0) + cstate.size.get(0)));
-        size.set(1, std.math.max(size.get(1), pos.get(1) + cstate.size.get(1)));
+        size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
+        size.value[1] = @max(size.value[1], pos.value[1] + cstate.size.value[1]);
 
         states.appendAssumeCapacity(.{
             .state = cstate,
@@ -113,10 +135,9 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 
     return .{
         .size = size,
-        .pos = vizops.vector.Vector2(usize).zero(),
-        .frameInfo = frameInfo,
+        .frame_info = frameInfo,
         .allocator = self.children.allocator,
-        .ptr = states.items,
+        .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
     };
@@ -128,14 +149,17 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
     var states = try std.ArrayList(ChildState).initCapacity(self.children.allocator, self.children.items.len);
 
     for (self.children.items) |child| {
-        const cstate = try child.node.preFrame(frameInfo.child(frameInfo.size.avail.sub(size)), scene);
+        const cframeInfo = frameInfo.child(frameInfo.size.avail.sub(size));
+        const cstate = try child.node.state(cframeInfo);
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intCast(child.pos.get(0) * frameInfo.size.res.get(0) / 100.0),
-            @intCast(child.pos.get(1) * frameInfo.size.res.get(1) / 100.0),
+            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
-        size.set(0, std.math.max(size.get(0), pos.get(0) + cstate.size.get(0)));
-        size.set(1, std.math.max(size.get(1), pos.get(1) + cstate.size.get(1)));
+        _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(pos, cstate.size)));
+
+        size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
+        size.value[1] = @max(size.value[1], pos.value[1] + cstate.size.value[1]);
 
         states.appendAssumeCapacity(.{
             .state = cstate,
@@ -145,10 +169,9 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
 
     return .{
         .size = size,
-        .pos = vizops.vector.Vector2(usize).zero(),
         .frame_info = frameInfo,
         .allocator = self.children.allocator,
-        .ptr = states.items,
+        .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
     };
@@ -160,11 +183,11 @@ fn frame(ctx: *anyopaque, scene: *Scene) anyerror!void {
 
     for (self.children.items) |child| {
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intCast(child.pos.get(0) * frameInfo.size.res.get(0) / 100.0),
-            @intCast(child.pos.get(1) * frameInfo.size.res.get(1) / 100.0),
+            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
-        try child.node.frame(&scene.sub(pos, child.node.last_state.?.size));
+        try child.node.frame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
     }
 }
 
@@ -174,11 +197,11 @@ fn postFrame(ctx: *anyopaque, scene: *Scene) anyerror!void {
 
     for (self.children.items) |child| {
         const pos = vizops.vector.Vector2(usize).init(.{
-            @intCast(child.pos.get(0) * frameInfo.size.res.get(0) / 100.0),
-            @intCast(child.pos.get(1) * frameInfo.size.res.get(1) / 100.0),
+            @intFromFloat(child.pos.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
+            @intFromFloat(child.pos.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
         });
 
-        try child.node.postFrame(&scene.sub(pos, child.node.last_state.?.size));
+        try child.node.postFrame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
     }
 }
 

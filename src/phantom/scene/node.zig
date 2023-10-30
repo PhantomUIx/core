@@ -12,14 +12,32 @@ pub const FrameInfo = struct {
     scale: vizops.vector.Float32Vector2,
     depth: u8,
 
+    pub const Options = struct {
+        res: vizops.vector.Vector2(usize),
+        scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(.{ 1.0, 1.0 }),
+        depth: u8,
+    };
+
+    pub fn init(options: Options) FrameInfo {
+        return .{
+            .size = .{
+                .phys = vizops.vector.Vector2(usize).zero(),
+                .res = options.res,
+                .avail = options.res,
+            },
+            .scale = options.scale,
+            .depth = options.depth,
+        };
+    }
+
     pub fn equal(self: FrameInfo, other: FrameInfo) bool {
-        return std.simd.countTrues(@Vector(4, bool){
+        return std.simd.countTrues(@Vector(5, bool){
             std.simd.countTrues(self.size.phys.value == other.size.phys.value) == 2,
             std.simd.countTrues(self.size.res.value == other.size.res.value) == 2,
             std.simd.countTrues(self.size.avail.value == other.size.avail.value) == 2,
             std.simd.countTrues(self.scale.value == other.scale.value) == 2,
             self.depth == other.depth,
-        }) == 4;
+        }) == 5;
     }
 
     pub fn child(self: FrameInfo, availSize: vizops.vector.Vector2(usize)) FrameInfo {
@@ -37,7 +55,6 @@ pub const VTable = struct {
     preFrame: *const fn (*anyopaque, FrameInfo, *Scene) anyerror!State,
     frame: *const fn (*anyopaque, *Scene) anyerror!void,
     postFrame: ?*const fn (*anyopaque, *Scene) anyerror!void = null,
-    format: ?*const fn (*anyopaque, comptime []const u8, std.fmt.FormatOptions, anytype) anyerror!void = null,
     deinit: ?*const fn (*anyopaque) void = null,
 };
 
@@ -50,13 +67,13 @@ pub const State = struct {
     ptrFree: ?*const fn (*anyopaque, std.mem.Allocator) void,
 
     pub inline fn deinit(self: State, alloc: ?std.mem.Allocator) void {
-        return if (self.ptrFree) |f| f(self.ptr, (self.allocator orelse alloc).?);
+        return if (self.ptrFree) |f| f(self.ptr.?, (self.allocator orelse alloc).?);
     }
 
     pub fn equal(self: State, other: State) bool {
         return std.simd.countTrues(@Vector(4, bool){
             std.simd.countTrues(self.size.value == other.size.value) == 2,
-            self.frameInfo.equal(other.frame_info),
+            self.frame_info.equal(other.frame_info),
             self.ptr == other.ptr,
             if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else true,
         }) == 4;
@@ -80,7 +97,7 @@ pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool 
     const shouldApply = !(if (self.last_state) |lastState| lastState.equal(newState) else false);
 
     if (shouldApply) {
-        if (self.last_state) |l| l.deinit();
+        if (self.last_state) |l| l.deinit(null);
 
         self.last_state = newState;
     }
@@ -88,18 +105,14 @@ pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool 
 }
 
 pub inline fn frame(self: *Node, scene: *Scene) anyerror!void {
-    return if (self.lastState != null) self.vtable.frame(self.ptr, scene) else void;
+    return if (self.last_state != null) self.vtable.frame(self.ptr, scene);
 }
 
 pub inline fn postFrame(self: *Node, scene: *Scene) anyerror!void {
-    return if (self.lastState != null) (if (self.vtable.postFrame) |f| f(self.ptr, scene) else void) else void;
-}
-
-pub inline fn format(self: *Node, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-    return if (self.vtable.format) |f| f(self.ptr, fmt, options, writer) else void;
+    return if (self.last_state != null) (if (self.vtable.postFrame) |f| f(self.ptr, scene));
 }
 
 pub inline fn deinit(self: *Node) void {
     if (self.last_state) |l| l.deinit(null);
-    return if (self.vtable.deinit) |f| f(self.ptr) else void;
+    if (self.vtable.deinit) |f| f(self.ptr);
 }

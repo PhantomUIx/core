@@ -10,9 +10,9 @@ pub const VTable = struct {
 vtable: *const VTable,
 ptr: *anyopaque,
 subscene: ?struct {
-    pos: vizops.vector.Vector2(usize) = null,
-    size: vizops.vector.Vector2(usize) = null,
-},
+    pos: vizops.vector.Vector2(usize),
+    size: vizops.vector.Vector2(usize),
+} = null,
 
 pub fn sub(self: *Scene, pos: vizops.vector.Vector2(usize), size: vizops.vector.Vector2(usize)) Scene {
     return .{
