@@ -1,5 +1,6 @@
 const std = @import("std");
 const vizops = @import("vizops");
+const Scene = @import("base.zig");
 const Node = @This();
 
 pub const FrameInfo = struct {
@@ -32,16 +33,16 @@ pub const FrameInfo = struct {
 
 pub const VTable = struct {
     state: *const fn (*anyopaque, FrameInfo) State,
-    preFrame: *const fn (*anyopaque, FrameInfo) State,
-    frame: *const fn (*anyopaque) void,
-    postFrame: ?*const fn (*anyopaque) void,
+    preFrame: *const fn (*anyopaque, FrameInfo, *Scene) State,
+    frame: *const fn (*anyopaque, *Scene) void,
+    postFrame: ?*const fn (*anyopaque, *Scene) void,
     format: ?*const fn (*anyopaque, comptime []const u8, std.fmt.FormatOptions, anytype) anyerror!void,
     deinit: ?*const fn (*anyopaque) void,
 };
 
 pub const State = struct {
     size: vizops.vector.Vector2(usize),
-    frameInfo: FrameInfo,
+    frame_info: FrameInfo,
 
     pub fn equal(self: State, other: State) bool {
         return std.simd.countTrues(@Vector(2, bool){
@@ -59,8 +60,8 @@ pub fn state(self: *Node, frameInfo: FrameInfo) State {
     return if (self.last_state) |s| s else self.vtable.state(self.ptr, frameInfo);
 }
 
-pub fn preFrame(self: *Node, frameInfo: FrameInfo) bool {
-    const newState = self.vtable.preFrame(self.ptr, frameInfo);
+pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) bool {
+    const newState = self.vtable.preFrame(self.ptr, frameInfo, scene);
     const shouldApply = !(if (self.last_state) |lastState| lastState.equal(newState) else false);
 
     if (shouldApply) {
@@ -69,12 +70,12 @@ pub fn preFrame(self: *Node, frameInfo: FrameInfo) bool {
     return shouldApply;
 }
 
-pub inline fn frame(self: *Node) void {
-    return if (self.lastState != null) self.vtable.frame(self.ptr) else void;
+pub inline fn frame(self: *Node, scene: *Scene) void {
+    return if (self.lastState != null) self.vtable.frame(self.ptr, scene) else void;
 }
 
-pub inline fn postFrame(self: *Node) void {
-    return if (self.lastState != null) (if (self.vtable.postFrame) |f| f(self.ptr) else void) else void;
+pub inline fn postFrame(self: *Node, scene: *Scene) void {
+    return if (self.lastState != null) (if (self.vtable.postFrame) |f| f(self.ptr, scene) else void) else void;
 }
 
 pub inline fn format(self: *Node, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
