@@ -32,3 +32,14 @@ pub fn cm(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeV
         @intFromFloat(dpcm.value[1] * value.value[1]),
     });
 }
+
+pub fn mm(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeVector {
+    const dpmm = vizops.vector.Float32Vector2.init(.{
+        @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / frameInfo.size.phys.value[0],
+        @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / frameInfo.size.phys.value[1],
+    }).mul(frameInfo.scale);
+    return UsizeVector.init(.{
+        @intFromFloat(dpmm.value[0] * value.value[0]),
+        @intFromFloat(dpmm.value[1] * value.value[1]),
+    });
+}
