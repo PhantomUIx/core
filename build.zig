@@ -1,19 +1,7 @@
 const std = @import("std");
 const metap = @import("metaplus").@"meta+";
 
-pub const BackendType = metap.enums.fromDecls(struct {
-    const shouldImport = blk: {
-        for (@import("root").dependencies.root_deps) |dep| {
-            if (std.mem.eql(u8, dep[0], "phantom")) break :blk true;
-        }
-        break :blk false;
-    };
-
-    const root = if (shouldImport) @import("root.@build") else struct {};
-
-    pub usingnamespace @import("src/phantom/scene/backends.zig");
-    pub usingnamespace if (@hasDecl(root, "phantom")) if (@hasDecl(root.phantom, "backends")) root.phantom.backends else struct {} else struct {};
-});
+pub const BackendType = metap.enums.fromDecls(@import("src/phantom/scene/backends.zig"));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
