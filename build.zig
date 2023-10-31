@@ -43,9 +43,9 @@ pub fn build(b: *std.Build) void {
         \\fn import(comptime name: []const u8) type {{
         \\  const root = @import("root");
         \\  if (@hasDecl(root, "phantomOptions")) {{
-        \\      if (@hasDecl(root.phantom, "modules")) {{
-        \\          if (@hasDecl(root.phantom.modules, name)) {{
-        \\              return @field(root.phantom.modules, name);
+        \\      if (@hasDecl(root.phantomOptions, "modules")) {{
+        \\          if (@hasDecl(root.phantomOptions.modules, name)) {{
+        \\              return @field(root.phantomOptions.modules, name);
         \\          }}
         \\      }}
         \\  }}
