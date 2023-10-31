@@ -2,5 +2,5 @@ const root = @import("root");
 const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports");
 
 pub const headless = @import("backends/headless.zig");
-pub usingnamespace if (@hasDecl(root, "phantom")) if (@hasDecl(root.phantom, "backends")) root.phantom.backends else struct {} else struct {};
+pub usingnamespace if (@hasDecl(root, "phantomOptions")) if (@hasDecl(root.phantom, "backends")) root.phantomOptions.backends else struct {} else struct {};
 pub usingnamespace if (@hasDecl(imports, "scene")) if (@hasDecl(imports.scene, "backends")) imports.scene.backends else struct {} else struct {};

@@ -33,7 +33,6 @@ pub fn build(b: *std.Build) void {
 
     const gen = b.addWriteFiles();
     var phantom_imports_data = std.ArrayList(u8).init(b.allocator);
-    var phantom_imports_deps = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
 
     const modules = [_][]const []const u8{
         &[_][]const u8{ "scene", "backends" },
@@ -43,7 +42,7 @@ pub fn build(b: *std.Build) void {
     phantom_imports_data.writer().print(
         \\fn import(comptime name: []const u8) type {{
         \\  const root = @import("root");
-        \\  if (@hasDecl(root, "phantom")) {{
+        \\  if (@hasDecl(root, "phantomOptions")) {{
         \\      if (@hasDecl(root.phantom, "modules")) {{
         \\          if (@hasDecl(root.phantom.modules, name)) {{
         \\              return @field(root.phantom.modules, name);
@@ -62,11 +61,11 @@ pub fn build(b: *std.Build) void {
         }
 
         for (@import("root").dependencies.root_deps) |dep| {
-            if (std.mem.startsWith(u8, dep[0], "phantom-")) {
+            if (std.mem.startsWith(u8, dep[0], "phantom.")) {
                 phantom_imports_data.writer().print(
                     \\pub usingnamespace blk: {{
                     \\  const imports = import("{s}");
-                , .{dep[0]}) catch |e| @panic(@errorName(e));
+                , .{dep[0][8..dep[0].len]}) catch |e| @panic(@errorName(e));
 
                 for (mod, 0..) |p, i| {
                     phantom_imports_data.writer().print(
@@ -98,22 +97,9 @@ pub fn build(b: *std.Build) void {
         }
     }
 
-    for (@import("root").dependencies.root_deps) |dep| {
-        if (std.mem.startsWith(u8, dep[0], "phantom-")) {
-            phantom_imports_deps.append(.{
-                .name = dep[0],
-                .module = b.dependency(dep[0], .{
-                    .target = target,
-                    .optimize = optimize,
-                }).module(dep[0]),
-            }) catch |e| @panic(@errorName(e));
-        }
-    }
-
     const phantom_imports_gen = gen.add("phantom.imports.zig", phantom_imports_data.items);
     const phantom_imports = b.addModule("phantom.imports", .{
         .source_file = phantom_imports_gen,
-        .dependencies = phantom_imports_deps.items,
     });
 
     const phantom = b.addModule("phantom", .{
@@ -144,7 +130,6 @@ pub fn build(b: *std.Build) void {
     unit_tests.addModule("meta+", metaplus.module("meta+"));
     unit_tests.addModule("phantom.imports", b.addModule("phantom.imports", .{
         .source_file = phantom_imports_gen,
-        .dependencies = phantom_imports_deps.items,
     }));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
