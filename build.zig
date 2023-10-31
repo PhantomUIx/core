@@ -70,7 +70,7 @@ pub fn build(b: *std.Build) void {
                 }
 
                 phantom_imports_data.writer().print(
-                    \\break :blk struct {};
+                    \\break :blk struct {{}};
                     \\}};
                 , .{}) catch |e| @panic(@errorName(e));
             }
