@@ -40,6 +40,20 @@ pub fn build(b: *std.Build) void {
         &[_][]const u8{"i18n"},
     };
 
+    phantom_imports_data.writer().print(
+        \\fn import(comptime name: []const u8) type {{
+        \\  const root = @import("root");
+        \\  if (@hasDecl(root, "phantom")) {{
+        \\      if (@hasDecl(root.phantom, "modules")) {{
+        \\          if (@hasDecl(root.phantom.modules, name)) {{
+        \\              return @field(root.phantom.modules, name);
+        \\          }}
+        \\      }}
+        \\  }}
+        \\  @compileError("Cannot import " ++ name ++ ", required in root.phantom.modules.");
+        \\}}
+    , .{}) catch |e| @panic(@errorName(e));
+
     for (modules) |mod| {
         for (mod) |p| {
             phantom_imports_data.writer().print(
@@ -51,7 +65,7 @@ pub fn build(b: *std.Build) void {
             if (std.mem.startsWith(u8, dep[0], "phantom-")) {
                 phantom_imports_data.writer().print(
                     \\pub usingnamespace blk: {{
-                    \\  const imports = @import("root.{s}");
+                    \\  const imports = import("{s}");
                 , .{dep[0]}) catch |e| @panic(@errorName(e));
 
                 for (mod, 0..) |p, i| {
