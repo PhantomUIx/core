@@ -120,7 +120,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 
     for (self.children.items) |child| {
         const cstate = try child.node.state(frameInfo.child(frameInfo.size.avail.sub(size)));
-        const pos = math.percentage(frameInfo, child.pos);
+        const pos = math.rel(frameInfo, child.pos);
 
         size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
         size.value[1] = @max(size.value[1], pos.value[1] + cstate.size.value[1]);
@@ -149,7 +149,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
     for (self.children.items) |child| {
         const cframeInfo = frameInfo.child(frameInfo.size.avail.sub(size));
         const cstate = try child.node.state(cframeInfo);
-        const pos = math.percentage(frameInfo, child.pos);
+        const pos = math.rel(frameInfo, child.pos);
 
         _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(pos, cstate.size)));
 
@@ -177,7 +177,7 @@ fn frame(ctx: *anyopaque, scene: *Scene) anyerror!void {
     const frameInfo = self.node.last_state.?.frame_info;
 
     for (self.children.items) |child| {
-        const pos = math.percentage(frameInfo, child.pos);
+        const pos = math.rel(frameInfo, child.pos);
         try child.node.frame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
     }
 }
@@ -187,7 +187,7 @@ fn postFrame(ctx: *anyopaque, scene: *Scene) anyerror!void {
     const frameInfo = self.node.last_state.?.frame_info;
 
     for (self.children.items) |child| {
-        const pos = math.percentage(frameInfo, child.pos);
+        const pos = math.rel(frameInfo, child.pos);
         try child.node.postFrame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
     }
 }

@@ -2,7 +2,7 @@ const vizops = @import("vizops");
 const Node = @import("../scene/node.zig");
 const UsizeVector = vizops.vector.Vector2(usize);
 
-pub fn percentage(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeVector {
+pub fn rel(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeVector {
     return UsizeVector.init(.{
         @intFromFloat(value.value[0] * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
         @intFromFloat(value.value[1] * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),

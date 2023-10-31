@@ -74,7 +74,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     const size = 2 * self.options.radius;
     return .{
-        .size = math.percentage(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
+        .size = math.rel(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
         .frame_info = frameInfo,
         .allocator = self.allocator,
         .ptr = try State.init(self.allocator, self.options),
@@ -87,7 +87,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     const size = 2 * self.options.radius;
     return .{
-        .size = math.percentage(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
+        .size = math.rel(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
         .frame_info = frameInfo,
         .allocator = self.allocator,
         .ptr = try State.init(self.allocator, self.options),
