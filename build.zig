@@ -47,7 +47,7 @@ pub fn build(b: *std.Build) void {
         }
 
         for (@import("root").dependencies.root_deps) |dep| {
-            if (std.mem.startsWith(u8, dep[0], "phantom.")) {
+            if (std.mem.startsWith(u8, dep[0], "phantom-")) {
                 phantom_imports_data.writer().print(
                     \\pub usingnamespace blk: {{
                     \\  const imports = @import("root.{s}");
