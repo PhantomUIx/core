@@ -48,6 +48,7 @@ pub fn build(b: *std.Build) void {
 
     const modules = [_][]const []const u8{
         &[_][]const u8{ "scene", "backends" },
+        &[_][]const u8{"i18n"},
     };
 
     for (modules) |mod| {
