@@ -43,18 +43,66 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    const gen = b.addWriteFiles();
+    var phantom_imports_data = std.ArrayList(u8).init(b.allocator);
+
+    const modules = [_][]const []const u8{
+        &[_][]const u8{ "scene", "backends" },
+    };
+
+    for (modules) |mod| {
+        for (mod) |p| {
+            phantom_imports_data.writer().print(
+                \\pub const {s} = struct {{
+            , .{p}) catch |e| @panic(@errorName(e));
+        }
+
+        for (@import("root").dependencies.root_deps) |dep| {
+            if (std.mem.startsWith(u8, dep[0], "phantom.")) {
+                phantom_imports_data.writer().print(
+                    \\pub usingnamespace blk: {{
+                    \\  const imports = @import("root.{s}");
+                , .{dep[0]}) catch |e| @panic(@errorName(e));
+
+                for (mod, 0..) |p, i| {
+                    phantom_imports_data.writer().print(
+                        \\if (@hasDecl(imports{s}, "{s}")) {{
+                    , .{ if (i == 0) "" else b.fmt(".{s}", .{std.mem.join(b.allocator, ".", mod[0..(i - 1)]) catch |e| @panic(@errorName(e))}), p }) catch |e| @panic(@errorName(e));
+                }
+
+                phantom_imports_data.writer().print(
+                    \\break :blk imports.{s}
+                , .{std.mem.join(b.allocator, ".", mod) catch |e| @panic(@errorName(e))}) catch |e| @panic(@errorName(e));
+
+                for (mod) |_| {
+                    phantom_imports_data.writer().print(
+                        \\}}
+                    , .{}) catch |e| @panic(@errorName(e));
+                }
+            }
+        }
+
+        for (mod) |_| {
+            phantom_imports_data.writer().print(
+                \\}};
+            , .{}) catch |e| @panic(@errorName(e));
+        }
+    }
+
     const phantom = b.addModule("phantom", .{
         .source_file = .{ .path = b.pathFromRoot("src/phantom.zig") },
-        .dependencies = &.{
-            .{
-                .name = "vizops",
-                .module = vizops.module("vizops"),
-            },
-            .{
-                .name = "meta+",
-                .module = metaplus.module("meta+"),
-            },
-        },
+        .dependencies = &.{ .{
+            .name = "vizops",
+            .module = vizops.module("vizops"),
+        }, .{
+            .name = "meta+",
+            .module = metaplus.module("meta+"),
+        }, .{
+            .name = "phantom.imports",
+            .module = b.addModule("phantom.imports", .{
+                .source_file = gen.add("phantom.imports.zig", phantom_imports_data.items),
+            }),
+        } },
     });
 
     const step_test = b.step("test", "Run all unit tests");
