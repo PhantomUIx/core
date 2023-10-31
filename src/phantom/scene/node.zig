@@ -5,7 +5,7 @@ const Node = @This();
 
 pub const FrameInfo = struct {
     size: struct {
-        phys: vizops.vector.Vector2(usize),
+        phys: vizops.vector.Float32Vector2,
         res: vizops.vector.Vector2(usize),
         avail: vizops.vector.Vector2(usize),
     },
@@ -15,13 +15,14 @@ pub const FrameInfo = struct {
     pub const Options = struct {
         res: vizops.vector.Vector2(usize),
         scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(.{ 1.0, 1.0 }),
+        physicalSize: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.zero(),
         depth: u8,
     };
 
     pub fn init(options: Options) FrameInfo {
         return .{
             .size = .{
-                .phys = vizops.vector.Vector2(usize).zero(),
+                .phys = options.physicalSize,
                 .res = options.res,
                 .avail = options.res,
             },

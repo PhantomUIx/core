@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const vizops = @import("vizops");
+const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const NodeCircle = @This();
@@ -73,10 +74,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     const size = 2 * self.options.radius;
     return .{
-        .size = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(size * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(size * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
-        }),
+        .size = math.percentage(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
         .frame_info = frameInfo,
         .allocator = self.allocator,
         .ptr = try State.init(self.allocator, self.options),
@@ -89,10 +87,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     const size = 2 * self.options.radius;
     return .{
-        .size = vizops.vector.Vector2(usize).init(.{
-            @intFromFloat(size * frameInfo.scale.value[0] * @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / 100.0),
-            @intFromFloat(size * frameInfo.scale.value[1] * @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / 100.0),
-        }),
+        .size = math.percentage(frameInfo, vizops.vector.Float32Vector2.init(.{size} ** 2)),
         .frame_info = frameInfo,
         .allocator = self.allocator,
         .ptr = try State.init(self.allocator, self.options),
