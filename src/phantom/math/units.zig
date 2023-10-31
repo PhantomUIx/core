@@ -20,3 +20,15 @@ pub fn inches(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) Us
         @intFromFloat(dpi.value[1] * value.value[1]),
     });
 }
+
+pub fn cm(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeVector {
+    const physicalCm = frameInfo.size.phys.div(vizops.vector.Float32Vector2.init(.{10.0} ** 2));
+    const dpcm = vizops.vector.Float32Vector2.init(.{
+        @as(f32, @floatFromInt(frameInfo.size.res.value[0])) / physicalCm.value[0],
+        @as(f32, @floatFromInt(frameInfo.size.res.value[1])) / physicalCm.value[1],
+    }).mul(frameInfo.scale);
+    return UsizeVector.init(.{
+        @intFromFloat(dpcm.value[0] * value.value[0]),
+        @intFromFloat(dpcm.value[1] * value.value[1]),
+    });
+}
