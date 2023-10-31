@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
                 }
 
                 phantom_imports_data.writer().print(
-                    \\break :blk imports.{s}
+                    \\break :blk imports.{s};
                 , .{std.mem.join(b.allocator, ".", mod) catch |e| @panic(@errorName(e))}) catch |e| @panic(@errorName(e));
 
                 for (mod) |_| {
