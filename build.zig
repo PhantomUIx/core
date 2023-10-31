@@ -47,7 +47,7 @@ pub fn build(b: *std.Build) void {
         }
 
         for (@import("root").dependencies.root_deps) |dep| {
-            if (std.mem.startsWith(u8, dep[0], "phantom-")) {
+            if (std.mem.startsWith(u8, dep[0], "phantom.")) {
                 phantom_imports_data.writer().print(
                     \\pub usingnamespace blk: {{
                     \\  const imports = @import("root.{s}");
@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
                 for (mod, 0..) |p, i| {
                     phantom_imports_data.writer().print(
                         \\if (@hasDecl(imports{s}, "{s}")) {{
-                    , .{ if (i == 0) "" else b.fmt(".{s}", .{std.mem.join(b.allocator, ".", mod[0..(i - 1)]) catch |e| @panic(@errorName(e))}), p }) catch |e| @panic(@errorName(e));
+                    , .{ if (i == 0) "" else b.fmt(".{s}", .{std.mem.join(b.allocator, ".", mod[0..i]) catch |e| @panic(@errorName(e))}), p }) catch |e| @panic(@errorName(e));
                 }
 
                 phantom_imports_data.writer().print(
