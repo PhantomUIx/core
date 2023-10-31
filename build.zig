@@ -33,6 +33,7 @@ pub fn build(b: *std.Build) void {
 
     const gen = b.addWriteFiles();
     var phantom_imports_data = std.ArrayList(u8).init(b.allocator);
+    var phantom_imports_deps = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
 
     const modules = [_][]const []const u8{
         &[_][]const u8{ "scene", "backends" },
@@ -83,6 +84,24 @@ pub fn build(b: *std.Build) void {
         }
     }
 
+    for (@import("root").dependencies.root_deps) |dep| {
+        if (std.mem.startsWith(u8, dep[0], "phantom-")) {
+            phantom_imports_deps.append(.{
+                .name = dep[0],
+                .module = b.dependency(dep[0], .{
+                    .target = target,
+                    .optimize = optimize,
+                }).module(dep[0]),
+            }) catch |e| @panic(@errorName(e));
+        }
+    }
+
+    const phantom_imports_gen = gen.add("phantom.imports.zig", phantom_imports_data.items);
+    const phantom_imports = b.addModule("phantom.imports", .{
+        .source_file = phantom_imports_gen,
+        .dependencies = phantom_imports_deps.items,
+    });
+
     const phantom = b.addModule("phantom", .{
         .source_file = .{ .path = b.pathFromRoot("src/phantom.zig") },
         .dependencies = &.{ .{
@@ -93,9 +112,7 @@ pub fn build(b: *std.Build) void {
             .module = metaplus.module("meta+"),
         }, .{
             .name = "phantom.imports",
-            .module = b.addModule("phantom.imports", .{
-                .source_file = gen.add("phantom.imports.zig", phantom_imports_data.items),
-            }),
+            .module = phantom_imports,
         } },
     });
 
@@ -111,6 +128,10 @@ pub fn build(b: *std.Build) void {
 
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
+    unit_tests.addModule("phantom.imports", b.addModule("phantom.imports", .{
+        .source_file = phantom_imports_gen,
+        .dependencies = phantom_imports_deps.items,
+    }));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
