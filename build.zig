@@ -68,6 +68,11 @@ pub fn build(b: *std.Build) void {
                         \\}}
                     , .{}) catch |e| @panic(@errorName(e));
                 }
+
+                phantom_imports_data.writer().print(
+                    \\break :blk struct {};
+                    \\}};
+                , .{}) catch |e| @panic(@errorName(e));
             }
         }
 
