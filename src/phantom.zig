@@ -5,6 +5,4 @@ pub const display = @import("phantom/display.zig");
 pub const math = @import("phantom/math.zig");
 pub const scene = @import("phantom/scene.zig");
 
-pub usingnamespace if (@hasDecl(imports, "i18n")) struct {
-    pub const i18n = imports.i18n;
-} else struct {};
+pub const i18n = if (@hasDecl(imports, "i18n")) imports.i18n else @compileError("phantom.i18n module was not added to build.zig.zon");
