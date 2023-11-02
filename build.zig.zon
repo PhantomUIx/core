@@ -13,6 +13,7 @@
     },
     .@"phantom-sdk" = .{
       .url = "https://github.com/PhantomUIx/sdk/archive/d927563a987a86cc127fdcc47a81782ee3b07f23.tar.gz",
+      .hash = "12202efee63462f93d5fe619df9e89a83b371bf336f9ec76acc5ee7f5490ecb38f4c",
     },
   },
 }
