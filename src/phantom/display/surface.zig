@@ -41,6 +41,7 @@ vtable: *const VTable,
 ptr: *anyopaque,
 displayKind: Base.Kind,
 kind: Kind,
+type: []const u8,
 
 pub inline fn deinit(self: *Surface) void {
     if (self.vtable.deinit) |f| f(self.ptr);
@@ -60,4 +61,17 @@ pub inline fn updateInfo(self: *Surface, val: Info, fields: []std.meta.FieldEnum
 
 pub inline fn createScene(self: *Surface) !*Scene {
     return self.vtable.createScene(self.ptr);
+}
+
+pub fn format(self: *const Surface, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+    _ = fmt;
+    _ = options;
+
+    try writer.print("{s}@{?s}@{?s} {{", .{ self.type, std.enums.tagName(Base.Kind, self.displayKind), std.enums.tagName(Kind, self.kind) });
+
+    if (@constCast(self).info() catch null) |surfaceInfo| {
+        try writer.print(" .info = {}", .{surfaceInfo});
+    }
+
+    try writer.writeAll(" }");
 }

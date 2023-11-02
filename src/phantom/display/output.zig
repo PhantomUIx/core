@@ -66,8 +66,8 @@ pub fn format(self: *const Output, comptime fmt: []const u8, options: std.fmt.Fo
             try writer.print(" {},", .{surface});
         }
 
-        try writer.writeAll(" }, ");
+        try writer.writeAll(" },");
     }
 
-    try writer.writeAll("}");
+    try writer.writeAll(" }");
 }

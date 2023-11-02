@@ -33,8 +33,8 @@ pub fn format(self: *const Base, comptime fmt: []const u8, options: std.fmt.Form
             try writer.print(" {},", .{output});
         }
 
-        try writer.writeAll(" } ");
+        try writer.writeAll(" }");
     }
 
-    try writer.writeAll("}");
+    try writer.writeAll(" }");
 }
