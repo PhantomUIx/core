@@ -16,7 +16,7 @@ pub const FrameInfo = struct {
         avail: vizops.vector.Vector2(usize),
     },
     scale: vizops.vector.Float32Vector2,
-    depth: u8,
+    depth: u8, // TODO: use depth info from vizops
 
     pub const Options = struct {
         res: vizops.vector.Vector2(usize),
