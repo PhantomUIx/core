@@ -14,6 +14,24 @@ pub const Info = struct {
     name: []const u8 = "",
     manufacturer: []const u8 = "",
     depth: u8, // TODO: use depth info from vizops
+
+    pub fn format(self: Info, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+
+        try writer.print("{{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .depth = {} }}", .{
+            self.enable,
+            self.size.phys.value[0],
+            self.size.phys.value[1],
+            self.size.res.value[0],
+            self.size.res.value[1],
+            self.scale.value[0],
+            self.scale.value[1],
+            self.name,
+            self.manufacturer,
+            self.depth,
+        });
+    }
 };
 
 pub const VTable = struct {
