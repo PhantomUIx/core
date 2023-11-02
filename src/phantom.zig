@@ -1,5 +1,5 @@
 const root = @import("root");
-const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports").Import(@This());
+const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports").import(@This());
 
 pub const math = @import("phantom/math.zig");
 pub const scene = @import("phantom/scene.zig");
