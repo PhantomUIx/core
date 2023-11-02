@@ -42,6 +42,8 @@ pub fn new(alloc: Allocator, options: Options) Allocator.Error!*NodeCircle {
         .options = options,
         .node = .{
             .ptr = self,
+            .type = @typeName(NodeCircle),
+            .id = @returnAddress(),
             .vtable = &.{
                 .dupe = dupe,
                 .state = state,

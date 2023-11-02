@@ -18,20 +18,17 @@ pub fn main() !void {
         }),
     });
 
-    var tree = try phantom.scene.NodeTree.new(alloc);
-    defer tree.node.deinit();
+    var flex = try phantom.scene.NodeFlex.new(alloc, .horizontal);
+    defer flex.tree.node.deinit();
 
-    try tree.children.append(.{
-        .node = @constCast(&(try backend.NodeCircle.new(alloc, .{
-            .radius = 32.0,
-            .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
-        })).node),
-        .pos = vizops.vector.Float32Vector2.init(.{ 0.0, 0.0 }),
-    });
+    try flex.children.append(@constCast(&(try backend.NodeCircle.new(alloc, .{
+        .radius = 32.0,
+        .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
+    })).node));
 
-    _ = try @constCast(&scene.scene()).frame(@constCast(&tree.node));
+    _ = try @constCast(&scene.scene()).frame(@constCast(&flex.tree.node));
 
-    const availSize = @constCast(&scene.scene()).frameInfo().size.res.sub(tree.node.last_state.?.size);
+    const availSize = @constCast(&scene.scene()).frameInfo().size.res.sub(flex.tree.node.last_state.?.size);
 
     std.debug.print("Scene has {} horizontal pixels and {} vertical pixels left over\n", .{ availSize.value[0], availSize.value[1] });
 

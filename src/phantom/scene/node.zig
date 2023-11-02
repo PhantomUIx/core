@@ -1,7 +1,13 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const vizops = @import("vizops");
 const Scene = @import("base.zig");
 const Node = @This();
+
+pub const Axis = enum {
+    horizontal,
+    vertical,
+};
 
 pub const FrameInfo = struct {
     size: struct {
@@ -83,6 +89,8 @@ pub const State = struct {
 
 vtable: *const VTable,
 ptr: *anyopaque,
+type: []const u8,
+id: usize,
 last_state: ?State = null,
 
 pub inline fn dupe(self: *Node) anyerror!*anyopaque {
@@ -116,4 +124,14 @@ pub inline fn postFrame(self: *Node, scene: *Scene) anyerror!void {
 pub inline fn deinit(self: *Node) void {
     if (self.last_state) |l| l.deinit(null);
     if (self.vtable.deinit) |f| f(self.ptr);
+}
+
+pub fn formatName(self: *Node, writer: anytype) !void {
+    if (builtin.mode == .Debug and !builtin.strip_debug_info) {
+        const debug = try std.debug.getSelfDebugInfo();
+        const mod = try debug.getModuleForAddress(self.id);
+        return std.fmt.format(writer, "{s}@{}", .{ self.type, mod });
+    } else {
+        return std.fmt.format(writer, "{s}@{x}", .{ self.type, self.id });
+    }
 }

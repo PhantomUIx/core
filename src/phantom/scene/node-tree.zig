@@ -8,7 +8,14 @@ const NodeTree = @This();
 
 pub const Child = struct {
     node: *Node,
-    pos: vizops.vector.Float32Vector2,
+    pos: vizops.vector.Vector2(usize),
+};
+
+pub const VTable = struct {
+    children: *const fn (*anyopaque, Node.FrameInfo) anyerror!std.ArrayList(Child),
+    overflow: ?*const fn (*anyopaque, node: *Node) anyerror!void,
+    dupe: *const fn (*anyopaque) anyerror!*anyopaque,
+    deinit: ?*const fn (*anyopaque) void = null,
 };
 
 const ChildState = struct {
@@ -54,26 +61,24 @@ const State = struct {
     }
 };
 
-children: std.ArrayList(Child),
 node: Node,
+vtable: *const VTable,
+ptr: *anyopaque,
 
-pub fn new(alloc: Allocator) Allocator.Error!*NodeTree {
-    const self = try alloc.create(NodeTree);
-    self.* = .{
-        .children = std.ArrayList(Child).init(alloc),
-        .node = .{
-            .ptr = self,
-            .vtable = &.{
-                .dupe = dupe,
-                .state = state,
-                .preFrame = preFrame,
-                .frame = frame,
-                .postFrame = postFrame,
-                .deinit = deinit,
-            },
+pub inline fn init(comptime T: type, ptr: *anyopaque) Node {
+    return .{
+        .ptr = ptr,
+        .type = @typeName(T),
+        .id = @returnAddress(),
+        .vtable = &.{
+            .dupe = dupe,
+            .state = state,
+            .preFrame = preFrame,
+            .frame = frame,
+            .postFrame = postFrame,
+            .deinit = deinit,
         },
     };
-    return self;
 }
 
 fn stateEqual(ctx: *anyopaque, otherctx: *anyopaque) bool {
@@ -89,52 +94,40 @@ fn stateFree(ctx: *anyopaque, _: std.mem.Allocator) void {
 
 fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
-    const d = try self.children.allocator.create(NodeTree);
-    errdefer self.children.allocator.destroy(d);
-
-    d.* = .{
-        .children = try std.ArrayList(Child).initCapacity(self.children.allocator, self.children.items.len),
-        .node = .{
-            .ptr = d,
-            .vtable = self.node.vtable,
-        },
-    };
-    errdefer d.children.deinit();
-
-    for (self.children.items) |child| {
-        const dchild = Child{
-            .node = @ptrCast(@alignCast(try child.node.dupe())),
-            .pos = child.pos,
-        };
-
-        d.children.appendAssumeCapacity(dchild);
-        errdefer dchild.node.deinit();
-    }
-    return d;
+    return self.vtable.dupe(self.ptr);
 }
 
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     var size = vizops.vector.Vector2(usize).zero();
-    var states = try std.ArrayList(ChildState).initCapacity(self.children.allocator, self.children.items.len);
 
-    for (self.children.items) |child| {
-        const cstate = try child.node.state(frameInfo.child(frameInfo.size.avail.sub(size)));
-        const pos = math.rel(frameInfo, child.pos);
+    const children = try self.vtable.children(self.ptr, frameInfo);
+    defer children.deinit();
 
-        size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
-        size.value[1] = @max(size.value[1], pos.value[1] + cstate.size.value[1]);
+    var states = try std.ArrayList(ChildState).initCapacity(children.allocator, children.items.len);
+
+    for (children.items) |child| {
+        const childSize = frameInfo.size.avail.sub(size);
+        if (std.simd.countTrues(childSize.value == vizops.vector.Vector2(usize).zero().value) == 2 and self.vtable.overflow != null) {
+            const overflow = self.vtable.overflow.?;
+            try overflow(self.ptr, child.node);
+        }
+
+        const cstate = try child.node.state(frameInfo.child(childSize));
+
+        size.value[0] = @max(size.value[0], child.pos.value[0] + cstate.size.value[0]);
+        size.value[1] = @max(size.value[1], child.pos.value[1] + cstate.size.value[1]);
 
         states.appendAssumeCapacity(.{
             .state = cstate,
-            .pos = pos,
+            .pos = child.pos,
         });
     }
 
     return .{
         .size = size,
         .frame_info = frameInfo,
-        .allocator = self.children.allocator,
+        .allocator = children.allocator,
         .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
@@ -144,28 +137,37 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!Node.State {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     var size = vizops.vector.Vector2(usize).zero();
-    var states = try std.ArrayList(ChildState).initCapacity(self.children.allocator, self.children.items.len);
 
-    for (self.children.items) |child| {
-        const cframeInfo = frameInfo.child(frameInfo.size.avail.sub(size));
+    const children = try self.vtable.children(self.ptr, frameInfo);
+    defer children.deinit();
+
+    var states = try std.ArrayList(ChildState).initCapacity(children.allocator, children.items.len);
+
+    for (children.items) |child| {
+        const childSize = frameInfo.size.avail.sub(size);
+        if (std.simd.countTrues(childSize.value == vizops.vector.Vector2(usize).zero().value) == 2 and self.vtable.overflow != null) {
+            const overflow = self.vtable.overflow.?;
+            try overflow(self.ptr, child.node);
+        }
+
+        const cframeInfo = frameInfo.child(childSize);
         const cstate = try child.node.state(cframeInfo);
-        const pos = math.rel(frameInfo, child.pos);
 
-        _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(pos, cstate.size)));
+        _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(child.pos, cstate.size)));
 
-        size.value[0] = @max(size.value[0], pos.value[0] + cstate.size.value[0]);
-        size.value[1] = @max(size.value[1], pos.value[1] + cstate.size.value[1]);
+        size.value[0] = @max(size.value[0], child.pos.value[0] + cstate.size.value[0]);
+        size.value[1] = @max(size.value[1], child.pos.value[1] + cstate.size.value[1]);
 
         states.appendAssumeCapacity(.{
             .state = cstate,
-            .pos = pos,
+            .pos = child.pos,
         });
     }
 
     return .{
         .size = size,
         .frame_info = frameInfo,
-        .allocator = self.children.allocator,
+        .allocator = children.allocator,
         .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
@@ -176,9 +178,11 @@ fn frame(ctx: *anyopaque, scene: *Scene) anyerror!void {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     const frameInfo = self.node.last_state.?.frame_info;
 
-    for (self.children.items) |child| {
-        const pos = math.rel(frameInfo, child.pos);
-        try child.node.frame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
+    const children = try self.vtable.children(self.ptr, frameInfo);
+    defer children.deinit();
+
+    for (children.items) |child| {
+        try child.node.frame(@constCast(&scene.sub(child.pos, child.node.last_state.?.size)));
     }
 }
 
@@ -186,17 +190,15 @@ fn postFrame(ctx: *anyopaque, scene: *Scene) anyerror!void {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     const frameInfo = self.node.last_state.?.frame_info;
 
-    for (self.children.items) |child| {
-        const pos = math.rel(frameInfo, child.pos);
-        try child.node.postFrame(@constCast(&scene.sub(pos, child.node.last_state.?.size)));
+    const children = try self.vtable.children(self.ptr, frameInfo);
+    defer children.deinit();
+
+    for (children.items) |child| {
+        try child.node.postFrame(@constCast(&scene.sub(child.pos, child.node.last_state.?.size)));
     }
 }
 
 fn deinit(ctx: *anyopaque) void {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
-    const alloc = self.children.allocator;
-
-    for (self.children.items) |child| child.node.deinit();
-    self.children.deinit();
-    alloc.destroy(self);
+    if (self.vtable.deinit) |f| f(self.ptr);
 }
