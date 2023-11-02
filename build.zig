@@ -31,75 +31,9 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    const gen = b.addWriteFiles();
-    var phantom_imports_data = std.ArrayList(u8).init(b.allocator);
-
-    const modules = [_][]const []const u8{
-        &[_][]const u8{ "scene", "backends" },
-        &[_][]const u8{"i18n"},
-    };
-
-    phantom_imports_data.writer().print(
-        \\fn import(comptime name: []const u8) type {{
-        \\  const root = @import("root");
-        \\  if (@hasDecl(root, "phantomOptions")) {{
-        \\      if (@hasDecl(root.phantomOptions, "modules")) {{
-        \\          if (@hasDecl(root.phantomOptions.modules, name)) {{
-        \\              return @field(root.phantomOptions.modules, name);
-        \\          }}
-        \\      }}
-        \\  }}
-        \\  @compileError("Cannot import " ++ name ++ ", required in root.phantom.modules.");
-        \\}}
-    , .{}) catch |e| @panic(@errorName(e));
-
-    for (modules) |mod| {
-        for (mod) |p| {
-            phantom_imports_data.writer().print(
-                \\pub const {s} = struct {{
-            , .{p}) catch |e| @panic(@errorName(e));
-        }
-
-        for (@import("root").dependencies.root_deps) |dep| {
-            if (std.mem.startsWith(u8, dep[0], "phantom.")) {
-                phantom_imports_data.writer().print(
-                    \\pub usingnamespace blk: {{
-                    \\  const imports = import("{s}");
-                , .{dep[0][8..dep[0].len]}) catch |e| @panic(@errorName(e));
-
-                for (mod, 0..) |p, i| {
-                    phantom_imports_data.writer().print(
-                        \\if (@hasDecl(imports{s}, "{s}")) {{
-                    , .{ if (i == 0) "" else b.fmt(".{s}", .{std.mem.join(b.allocator, ".", mod[0..i]) catch |e| @panic(@errorName(e))}), p }) catch |e| @panic(@errorName(e));
-                }
-
-                phantom_imports_data.writer().print(
-                    \\break :blk imports.{s};
-                , .{std.mem.join(b.allocator, ".", mod) catch |e| @panic(@errorName(e))}) catch |e| @panic(@errorName(e));
-
-                for (mod) |_| {
-                    phantom_imports_data.writer().print(
-                        \\}}
-                    , .{}) catch |e| @panic(@errorName(e));
-                }
-
-                phantom_imports_data.writer().print(
-                    \\break :blk struct {{}};
-                    \\}};
-                , .{}) catch |e| @panic(@errorName(e));
-            }
-        }
-
-        for (mod) |_| {
-            phantom_imports_data.writer().print(
-                \\}};
-            , .{}) catch |e| @panic(@errorName(e));
-        }
-    }
-
-    const phantom_imports_gen = gen.add("phantom.imports.zig", phantom_imports_data.items);
-    const phantom_imports = b.addModule("phantom.imports", .{
-        .source_file = phantom_imports_gen,
+    const sdk = b.dependency("phantom-sdk", .{
+        .target = target,
+        .optimize = optimize,
     });
 
     const phantom = b.addModule("phantom", .{
@@ -112,7 +46,7 @@ pub fn build(b: *std.Build) void {
             .module = metaplus.module("meta+"),
         }, .{
             .name = "phantom.imports",
-            .module = phantom_imports,
+            .module = sdk.module("phantom.imports"),
         } },
     });
 
@@ -128,9 +62,7 @@ pub fn build(b: *std.Build) void {
 
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
-    unit_tests.addModule("phantom.imports", b.addModule("phantom.imports", .{
-        .source_file = phantom_imports_gen,
-    }));
+    unit_tests.addModule("phantom.imports", sdk.module("phantom.imports"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
