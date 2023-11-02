@@ -21,10 +21,12 @@ pub const VTable = struct {
     createSurface: *const fn (*anyopaque) anyerror!*Surface,
     info: *const fn (*anyopaque) anyerror!Info,
     updateInfo: *const fn (*anyopaque, Info, []std.meta.FieldEnum(Info)) anyerror!void,
+    deinit: ?*const fn (*anyopaque) void,
 };
 
 vtable: *const VTable,
 ptr: *anyopaque,
+type: []const u8,
 displayKind: Base.Kind,
 
 pub inline fn surfaces(self: *Output) !std.ArrayList(*Surface) {
@@ -41,4 +43,31 @@ pub inline fn info(self: *Output) !Info {
 
 pub inline fn updateInfo(self: *Output, val: Info, fields: []std.meta.FieldEnum(Info)) !void {
     return self.vtable.updateInfo(self.ptr, val, fields);
+}
+
+pub inline fn deinit(self: *Output) void {
+    if (self.vtable.deinit) |f| f(self.ptr);
+}
+
+pub fn format(self: *const Output, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+    _ = fmt;
+    _ = options;
+
+    try writer.print("{s}@{?s} {{", .{ self.type, std.enums.tagName(Base.Kind, self.displayKind) });
+
+    if (@constCast(self).info() catch null) |outputInfo| {
+        try writer.print(" .info = {},", .{outputInfo});
+    }
+
+    if (@constCast(self).surfaces() catch null) |surfacesList| {
+        try writer.print(" .surfaces = [{}] {{", .{surfacesList.items.len});
+
+        for (surfacesList.items) |surface| {
+            try writer.print(" {},", .{surface});
+        }
+
+        try writer.writeAll(" }, ");
+    }
+
+    try writer.writeAll("}");
 }

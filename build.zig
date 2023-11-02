@@ -1,13 +1,15 @@
 const std = @import("std");
 const metap = @import("metaplus").@"meta+";
 
-pub const BackendType = metap.enums.fromDecls(@import("src/phantom/scene/backends.zig"));
+pub const DisplayBackendType = metap.enums.fromDecls(@import("src/phantom/display/backends.zig"));
+pub const SceneBackendType = metap.enums.fromDecls(@import("src/phantom/scene/backends.zig"));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const no_docs = b.option(bool, "no-docs", "skip installing documentation") orelse false;
-    const backend = b.option(BackendType, "backend", "The backend to use for the example") orelse .headless;
+    const display_backend = b.option(DisplayBackendType, "display-backend", "The display backend to use for the example") orelse .headless;
+    const scene_backend = b.option(SceneBackendType, "scene-backend", "The scene backend to use for the example") orelse .headless;
 
     const vizops = b.dependency("vizops", .{
         .target = target,
@@ -68,7 +70,8 @@ pub fn build(b: *std.Build) void {
     step_test.dependOn(&run_unit_tests.step);
 
     const exe_options = b.addOptions();
-    exe_options.addOption(BackendType, "backend", backend);
+    exe_options.addOption(DisplayBackendType, "display_backend", display_backend);
+    exe_options.addOption(SceneBackendType, "scene_backend", scene_backend);
 
     const exe_example = b.addExecutable(.{
         .name = "example",
