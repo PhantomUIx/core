@@ -4,6 +4,10 @@ const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phan
 pub const math = @import("phantom/math.zig");
 pub const scene = @import("phantom/scene.zig");
 
+pub usingnamespace if (@hasDecl(imports, "display")) struct {
+    pub const display = imports.display;
+} else struct {};
+
 pub usingnamespace if (@hasDecl(imports, "i18n")) struct {
     pub const i18n = imports.i18n;
 } else struct {};
