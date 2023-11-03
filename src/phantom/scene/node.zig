@@ -136,7 +136,7 @@ pub fn formatName(self: *Node, alloc: std.mem.Allocator, writer: anytype) !void 
         try std.fmt.format(writer, "{s}@", .{self.type});
 
         if (sym.line_info) |line| {
-            try std.fmt.format(writer, "{s}:{}.{}", .{ line.file_name, line.line, line.column });
+            try std.fmt.format(writer, "{s}:{}:{}", .{ line.file_name, line.line, line.column });
         } else {
             try std.fmt.format(writer, "{s}", .{sym.symbol_name});
         }
