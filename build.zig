@@ -87,6 +87,21 @@ pub fn build(b: *std.Build) void {
     exe_example.addOptions("options", exe_options);
     b.installArtifact(exe_example);
 
+    const exe_example_libc = b.addExecutable(.{
+        .name = "example-libc",
+        .root_source_file = .{
+            .path = b.pathFromRoot("src/example.zig"),
+        },
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+
+    exe_example_libc.addModule("phantom", phantom);
+    exe_example_libc.addModule("vizops", vizops.module("vizops"));
+    exe_example_libc.addOptions("options", exe_options);
+    b.installArtifact(exe_example_libc);
+
     if (!no_docs) {
         const docs = b.addInstallDirectory(.{
             .source_dir = unit_tests.getEmittedDocs(),

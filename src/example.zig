@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const options = @import("options");
 const phantom = @import("phantom");
 const vizops = @import("vizops");
@@ -10,7 +11,7 @@ const sceneBackendType: phantom.scene.BackendType = @enumFromInt(@intFromEnum(op
 const sceneBackend = phantom.scene.Backend(sceneBackendType);
 
 pub fn main() !void {
-    const alloc = std.heap.page_allocator;
+    const alloc = if (builtin.link_libc) std.heap.c_allocator else std.heap.page_allocator;
 
     var display = displayBackend.Display.init(alloc, .client);
     defer display.deinit();
