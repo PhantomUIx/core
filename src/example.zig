@@ -54,8 +54,9 @@ pub fn main() !void {
     const flex = try scene.createNode(.NodeFlex, .{
         .direction = phantom.scene.Node.Axis.horizontal,
         .children = &[_]*phantom.scene.Node{
-            try scene.createNode(.NodeCircle, .{
+            try scene.createNode(.NodeArc, .{
                 .radius = @as(f32, 32.0),
+                .angles = vizops.vector.Float32Vector2.init(.{ 0, std.math.tau - 0.0001 }),
                 .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
             }),
             try scene.createNode(.NodeRect, .{
