@@ -24,6 +24,7 @@ pub fn new(alloc: Allocator, options: Options) Allocator.Error!*HeadlessScene {
             .vtable = &.{
                 .sub = null,
                 .frameInfo = frameInfo,
+                .deinit = deinit,
             },
             .subscene = null,
         },
@@ -34,4 +35,9 @@ pub fn new(alloc: Allocator, options: Options) Allocator.Error!*HeadlessScene {
 fn frameInfo(ctx: *anyopaque) Node.FrameInfo {
     const self: *HeadlessScene = @ptrCast(@alignCast(ctx));
     return self.frame_info;
+}
+
+fn deinit(ctx: *anyopaque) void {
+    const self: *HeadlessScene = @ptrCast(@alignCast(ctx));
+    self.allocator.destroy(self);
 }

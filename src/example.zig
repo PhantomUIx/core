@@ -44,6 +44,10 @@ pub fn main() !void {
         .states = &.{.mapped},
         .size = vizops.vector.Vector2(usize).init(.{ 64, 64 }),
     });
+    defer {
+        surface.destroy() catch @panic("Failed to destroy the surface");
+        surface.deinit();
+    }
 
     const scene = try surface.createScene();
 

@@ -14,6 +14,7 @@ allocator: Allocator,
 info: Surface.Info,
 scene: ?*HeadlessScene,
 output: ?*HeadlessOutput,
+id: ?usize,
 
 pub fn new(alloc: Allocator, displayKind: Base.Kind, kind: Surface.Kind, info: Surface.Info) Allocator.Error!*HeadlessSurface {
     const self = try alloc.create(HeadlessSurface);
@@ -37,18 +38,26 @@ pub fn new(alloc: Allocator, displayKind: Base.Kind, kind: Surface.Kind, info: S
         .info = info,
         .scene = null,
         .output = null,
+        .id = null,
     };
     return self;
 }
 
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *HeadlessSurface = @ptrCast(@alignCast(ctx));
+
+    if (self.scene) |scene| scene.base.deinit();
+
     self.allocator.destroy(self);
 }
 
 fn impl_destroy(ctx: *anyopaque) anyerror!void {
-    _ = ctx;
-    // TODO: use output
+    const self: *HeadlessSurface = @ptrCast(@alignCast(ctx));
+    if (self.output) |output| {
+        if (self.id) |id| {
+            _ = output.surfaces.swapRemove(id);
+        }
+    }
 }
 
 fn impl_info(ctx: *anyopaque) anyerror!Surface.Info {
@@ -66,7 +75,7 @@ fn impl_update_info(ctx: *anyopaque, info: Surface.Info, fields: []std.meta.Fiel
 fn impl_create_scene(ctx: *anyopaque) anyerror!*Scene {
     const self: *HeadlessSurface = @ptrCast(@alignCast(ctx));
 
-    if (self.scene) |_| return @constCast(&self.scene.?.base);
+    if (self.scene) |scene| return @constCast(&scene.base);
 
     if (self.output) |output| {
         const outputInfo = try output.base.info();

@@ -69,9 +69,12 @@ fn impl_surfaces(ctx: *anyopaque) anyerror!std.ArrayList(*Surface) {
 
 fn impl_create_surface(ctx: *anyopaque, kind: Surface.Kind, info: Surface.Info) anyerror!*Surface {
     const self: *HeadlessOutput = @ptrCast(@alignCast(ctx));
+
     const surface = try HeadlessSurface.new(self.surfaces.allocator, self.base.displayKind, kind, info);
-    try self.surfaces.append(surface);
     surface.output = self;
+    surface.id = self.surfaces.items.len;
+
+    try self.surfaces.append(surface);
     return &surface.base;
 }
 

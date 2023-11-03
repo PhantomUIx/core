@@ -5,6 +5,7 @@ const Scene = @This();
 pub const VTable = struct {
     sub: ?*const fn (*anyopaque, vizops.vector.Vector2(usize), vizops.vector.Vector2(usize)) *anyopaque,
     frameInfo: *const fn (*anyopaque) Node.FrameInfo,
+    deinit: ?*const fn (*anyopaque) void = null,
 };
 
 vtable: *const VTable,
@@ -27,6 +28,10 @@ pub fn sub(self: *Scene, pos: vizops.vector.Vector2(usize), size: vizops.vector.
 
 pub inline fn frameInfo(self: *Scene) Node.FrameInfo {
     return self.vtable.frameInfo(self.ptr);
+}
+
+pub inline fn deinit(self: *Scene) void {
+    if (self.vtable.deinit) |f| f(self.ptr);
 }
 
 pub fn frame(self: *Scene, node: *Node) !bool {
