@@ -59,6 +59,7 @@ pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node
                 .preFrame = preFrame,
                 .frame = frame,
                 .deinit = deinit,
+                .format = format,
             },
         },
     };
@@ -115,4 +116,14 @@ fn frame(ctx: *anyopaque, _: *Scene) anyerror!void {
 fn deinit(ctx: *anyopaque) void {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
     self.allocator.destroy(self);
+}
+
+fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
+    const self: *NodeCircle = @ptrCast(@alignCast(ctx));
+
+    var output = std.ArrayList(u8).init(self.allocator);
+    errdefer output.deinit();
+
+    try output.writer().print("{{ .radius = {}, .color = {} }}", .{ self.options.radius, self.options.color });
+    return output;
 }

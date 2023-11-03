@@ -17,6 +17,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
             .overflow = impl_overflow,
             .dupe = impl_dupe,
             .deinit = impl_deinit,
+            .format = impl_format,
         },
         .ptr = ptr,
         .node = NodeTree.init(T, id orelse @returnAddress(), @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
@@ -105,4 +106,14 @@ fn impl_deinit(ctx: *anyopaque) void {
     const alloc = self.children.allocator;
     self.children.deinit();
     alloc.destroy(self);
+}
+
+fn impl_format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
+    const self: *NodeFlex = @ptrCast(@alignCast(ctx));
+
+    var output = std.ArrayList(u8).init(self.children.allocator);
+    errdefer output.deinit();
+
+    try output.writer().print("{{ .direction = {?s}, .children = [{}] {any} }}", .{ std.enums.tagName(Node.Axis, self.direction), self.children.items.len, self.children.items });
+    return output;
 }

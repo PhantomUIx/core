@@ -63,6 +63,7 @@ pub const VTable = struct {
     frame: *const fn (*anyopaque, *Scene) anyerror!void,
     postFrame: ?*const fn (*anyopaque, *Scene) anyerror!void = null,
     deinit: ?*const fn (*anyopaque) void = null,
+    format: ?*const fn (*anyopaque, ?std.mem.Allocator) anyerror!std.ArrayList(u8) = null,
 };
 
 pub const State = struct {
@@ -126,8 +127,26 @@ pub inline fn deinit(self: *Node) void {
     if (self.vtable.deinit) |f| f(self.ptr);
 }
 
-pub fn formatName(self: *Node, alloc: std.mem.Allocator, writer: anytype) !void {
-    if (builtin.mode == .Debug and !builtin.strip_debug_info) {
+pub fn format(self: *const Node, comptime _: []const u8, options: std.fmt.FormatOptions, writer: anytype) @TypeOf(writer).Error!void {
+    _ = options;
+    const FallbackError = @field(@TypeOf(writer).Error, @typeInfo(@TypeOf(writer).Error).ErrorSet.?[0].name);
+
+    if (self.vtable.format) |fmt| {
+        const output = fmt(self.ptr, if (self.last_state) |s| s.allocator else null) catch return FallbackError;
+        defer output.deinit();
+
+        self.formatName(output.allocator, writer) catch return FallbackError;
+        try writer.writeByte(' ');
+        try writer.writeAll(output.items);
+    } else {
+        self.formatName(if (self.last_state) |s| s.allocator else null, writer) catch return FallbackError;
+        try writer.print(" {{ .last_state = {?} }}", .{self.last_state});
+    }
+}
+
+pub fn formatName(self: *const Node, optAlloc: ?std.mem.Allocator, writer: anytype) !void {
+    if (builtin.mode == .Debug and !builtin.strip_debug_info and optAlloc != null) {
+        const alloc = optAlloc.?;
         const debug = try std.debug.getSelfDebugInfo();
         const mod = try debug.getModuleForAddress(self.id);
         const sym = try mod.getSymbolAtAddress(alloc, self.id);
@@ -140,6 +159,8 @@ pub fn formatName(self: *Node, alloc: std.mem.Allocator, writer: anytype) !void 
         } else {
             try std.fmt.format(writer, "{s}", .{sym.symbol_name});
         }
+    } else if (builtin.mode == .ReleaseSmall) {
+        return std.fmt.format(writer, "{s}@{x}", .{ self.type, @intFromPtr(self.ptr) });
     } else {
         return std.fmt.format(writer, "{s}@{x}", .{ self.type, self.id });
     }

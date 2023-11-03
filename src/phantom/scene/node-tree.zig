@@ -16,6 +16,7 @@ pub const VTable = struct {
     overflow: ?*const fn (*anyopaque, node: *Node) anyerror!void,
     dupe: *const fn (*anyopaque) anyerror!*anyopaque,
     deinit: ?*const fn (*anyopaque) void = null,
+    format: ?*const fn (*anyopaque, ?Allocator) anyerror!std.ArrayList(u8) = null,
 };
 
 const ChildState = struct {
@@ -77,6 +78,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) Node {
             .frame = frame,
             .postFrame = postFrame,
             .deinit = deinit,
+            .format = format,
         },
     };
 }
@@ -201,4 +203,26 @@ fn postFrame(ctx: *anyopaque, scene: *Scene) anyerror!void {
 fn deinit(ctx: *anyopaque) void {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     if (self.vtable.deinit) |f| f(self.ptr);
+}
+
+fn format(ctx: *anyopaque, optAlloc: ?Allocator) anyerror!std.ArrayList(u8) {
+    const self: *NodeTree = @ptrCast(@alignCast(ctx));
+    if (self.vtable.format) |f| return f(self.ptr, optAlloc);
+
+    if (optAlloc) |alloc| {
+        var output = std.ArrayList(u8).init(alloc);
+        errdefer output.deinit();
+
+        try output.writer().writeAll("{");
+
+        if (self.node.last_state) |lastState| {
+            if (self.vtable.children(self.ptr, lastState.frame_info) catch null) |children| {
+                try output.writer().print(" .children = [{}] {any}", .{ children.items.len, children.items });
+            }
+        }
+
+        try output.writer().writeAll(" }");
+        return output;
+    }
+    return error.NoAlloc;
 }
