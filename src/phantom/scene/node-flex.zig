@@ -23,6 +23,18 @@ pub inline fn init(comptime T: type, ptr: *anyopaque) NodeTree {
     };
 }
 
+pub fn create(args: std.StringHashMap(?*anyopaque)) !*Node {
+    const direction: Node.Axis = @enumFromInt(@intFromPtr(args.get("direction") orelse return error.MissingKey));
+    var self = try new(args.allocator, direction);
+
+    if (args.get("children")) |childrenPtr| {
+        const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
+        const children = @as([*]const *Node, @ptrCast(@alignCast(childrenPtr)))[0..childrenLen];
+        try self.children.appendSlice(children);
+    }
+    return &self.tree.node;
+}
+
 pub fn new(alloc: Allocator, direction: Node.Axis) Allocator.Error!*NodeFlex {
     const self = try alloc.create(NodeFlex);
     self.* = .{

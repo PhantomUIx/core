@@ -51,17 +51,20 @@ pub fn main() !void {
 
     const scene = try surface.createScene(sceneBackendType);
 
-    var flex = try phantom.scene.NodeFlex.new(alloc, .horizontal);
-    defer flex.tree.node.deinit();
+    const flex = try scene.createNode(.NodeFlex, .{
+        .direction = phantom.scene.Node.Axis.horizontal,
+        .children = &[_]*phantom.scene.Node{
+            try scene.createNode(.NodeCircle, .{
+                .degree = 120,
+                .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
+            }),
+        },
+    });
+    defer flex.deinit();
 
-    try flex.children.append(@constCast(&(try sceneBackend.NodeCircle.new(alloc, .{
-        .radius = 12.0,
-        .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
-    })).node));
+    _ = try @constCast(scene).frame(flex);
 
-    _ = try @constCast(scene).frame(@constCast(&flex.tree.node));
-
-    const availSize = @constCast(scene).frameInfo().size.res.sub(flex.tree.node.last_state.?.size);
+    const availSize = @constCast(scene).frameInfo().size.res.sub(flex.last_state.?.size);
 
     std.debug.print("Scene has {} horizontal pixels and {} vertical pixels left over\n", .{ availSize.value[0], availSize.value[1] });
 }

@@ -4,7 +4,6 @@ const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const HeadlessScene = @This();
 
-allocator: Allocator,
 frame_info: Node.FrameInfo,
 base: Scene,
 
@@ -14,14 +13,15 @@ pub fn new(options: Scene.Options) Allocator.Error!*HeadlessScene {
     errdefer alloc.destroy(self);
 
     self.* = .{
-        .allocator = alloc,
         .frame_info = options.frame_info,
         .base = .{
+            .allocator = alloc,
             .ptr = self,
             .vtable = &.{
                 .sub = null,
                 .frameInfo = frameInfo,
                 .deinit = deinit,
+                .createNode = createNode,
             },
             .subscene = null,
         },
@@ -36,5 +36,10 @@ fn frameInfo(ctx: *anyopaque) Node.FrameInfo {
 
 fn deinit(ctx: *anyopaque) void {
     const self: *HeadlessScene = @ptrCast(@alignCast(ctx));
-    self.allocator.destroy(self);
+    self.base.allocator.destroy(self);
+}
+
+fn createNode(ctx: *anyopaque, typeName: []const u8, args: std.StringHashMap(?*anyopaque)) anyerror!*Node {
+    _ = ctx;
+    return @import("../../../scene.zig").createNode(.headless, typeName, args);
 }

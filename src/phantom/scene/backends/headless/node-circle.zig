@@ -35,6 +35,15 @@ allocator: Allocator,
 options: Options,
 node: Node,
 
+pub fn create(args: std.StringHashMap(?*anyopaque)) !*Node {
+    const degree = @intFromPtr(args.get("degree") orelse return error.MissingKey);
+    const color: *vizops.vector.Float32Vector4 = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
+    return &(try new(args.allocator, .{
+        .radius = @as(f32, @floatFromInt(degree)) * (@as(f32, std.math.pi) / @as(f32, 180)),
+        .color = vizops.vector.Float32Vector4.init(color.value),
+    })).node;
+}
+
 pub fn new(alloc: Allocator, options: Options) Allocator.Error!*NodeCircle {
     const self = try alloc.create(NodeCircle);
     self.* = .{
