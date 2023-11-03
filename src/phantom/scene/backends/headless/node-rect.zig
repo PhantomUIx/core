@@ -73,12 +73,12 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
         .color = vizops.vector.Float32Vector4.init(color.value),
         .radius = .{
             .top = .{
-                .left = if (args.get("topLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else 0,
-                .right = if (args.get("topRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else 0,
+                .left = if (args.get("topLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
+                .right = if (args.get("topRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
             },
             .bottom = .{
-                .left = if (args.get("bottomLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else 0,
-                .right = if (args.get("bottomRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else 0,
+                .left = if (args.get("bottomLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
+                .right = if (args.get("bottomRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
             },
         },
     })).node;
@@ -101,6 +101,7 @@ pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node
                 .preFrame = preFrame,
                 .frame = frame,
                 .deinit = deinit,
+                .format = format,
             },
         },
     };
@@ -155,4 +156,27 @@ fn frame(ctx: *anyopaque, _: *Scene) anyerror!void {
 fn deinit(ctx: *anyopaque) void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
     self.allocator.destroy(self);
+}
+
+fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
+    const self: *NodeRect = @ptrCast(@alignCast(ctx));
+
+    var output = std.ArrayList(u8).init(self.allocator);
+    errdefer output.deinit();
+
+    try output.writer().print("{{ .size = {}, .color = {}", .{ self.options.size, self.options.color });
+
+    if (self.options.radius) |r| {
+        if (r.top) |t| {
+            if (t.left) |v| try output.writer().print(", .topLeft = {}", .{v});
+            if (t.right) |v| try output.writer().print(", .topRight = {}", .{v});
+        }
+        if (r.top) |b| {
+            if (b.left) |v| try output.writer().print(", .bottomLeft = {}", .{v});
+            if (b.right) |v| try output.writer().print(", .bottomRight = {}", .{v});
+        }
+    }
+
+    try output.writer().writeAll(" }");
+    return output;
 }
