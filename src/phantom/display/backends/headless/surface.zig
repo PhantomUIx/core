@@ -3,7 +3,7 @@ const Allocator = std.mem.Allocator;
 const vizops = @import("vizops");
 const Base = @import("../../base.zig");
 const Surface = @import("../../surface.zig");
-const Scene = @import("../../../scene/base.zig");
+const SceneModule = @import("../../../scene.zig");
 const Node = @import("../../../scene/node.zig");
 const HeadlessScene = @import("../../../scene/backends/headless/scene.zig");
 const HeadlessOutput = @import("output.zig");
@@ -12,7 +12,7 @@ const HeadlessSurface = @This();
 base: Surface,
 allocator: Allocator,
 info: Surface.Info,
-scene: ?*HeadlessScene,
+scene: ?*SceneModule.Base,
 output: ?*HeadlessOutput,
 id: ?usize,
 
@@ -46,7 +46,7 @@ pub fn new(alloc: Allocator, displayKind: Base.Kind, kind: Surface.Kind, info: S
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *HeadlessSurface = @ptrCast(@alignCast(ctx));
 
-    if (self.scene) |scene| scene.base.deinit();
+    if (self.scene) |scene| scene.deinit();
 
     self.allocator.destroy(self);
 }
@@ -72,22 +72,23 @@ fn impl_update_info(ctx: *anyopaque, info: Surface.Info, fields: []std.meta.Fiel
     return error.NotImplemented;
 }
 
-fn impl_create_scene(ctx: *anyopaque) anyerror!*Scene {
+fn impl_create_scene(ctx: *anyopaque, backendType: SceneModule.BackendType) anyerror!*SceneModule.Base {
     const self: *HeadlessSurface = @ptrCast(@alignCast(ctx));
 
-    if (self.scene) |scene| return @constCast(&scene.base);
+    if (self.scene) |scene| return scene;
 
     if (self.output) |output| {
         const outputInfo = try output.base.info();
 
-        self.scene = try HeadlessScene.new(self.allocator, .{
+        self.scene = try SceneModule.createBackend(backendType, .{
+            .allocator = self.allocator,
             .frame_info = Node.FrameInfo.init(.{
                 .res = self.info.size,
                 .scale = outputInfo.scale,
                 .depth = self.info.depth orelse outputInfo.depth,
             }),
         });
-        return @constCast(&self.scene.?.base);
+        return self.scene.?;
     }
     return error.MissingOutput;
 }

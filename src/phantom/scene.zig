@@ -1,3 +1,4 @@
+const std = @import("std");
 const metaplus = @import("meta+");
 
 const base = struct {
@@ -17,4 +18,15 @@ pub fn Backend(comptime T: BackendType) type {
         pub usingnamespace @field(backends, @tagName(T));
         pub usingnamespace base;
     };
+}
+
+pub fn createBackend(t: BackendType, options: Base.Options) !*Base {
+    const tag = std.enums.tagName(BackendType, t) orelse return error.InvalidBackend;
+    inline for (@typeInfo(backends).Struct.decls) |decl| {
+        if (std.mem.eql(u8, decl.name, tag)) {
+            const backend = Backend(@field(BackendType, decl.name));
+            return &(try backend.Scene.new(options)).base;
+        }
+    }
+    return error.InvalidBackend;
 }

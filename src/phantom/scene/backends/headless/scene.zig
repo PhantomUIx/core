@@ -4,15 +4,12 @@ const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const HeadlessScene = @This();
 
-pub const Options = struct {
-    frame_info: Node.FrameInfo,
-};
-
 allocator: Allocator,
 frame_info: Node.FrameInfo,
 base: Scene,
 
-pub fn new(alloc: Allocator, options: Options) Allocator.Error!*HeadlessScene {
+pub fn new(options: Scene.Options) Allocator.Error!*HeadlessScene {
+    const alloc = options.allocator;
     const self = try alloc.create(HeadlessScene);
     errdefer alloc.destroy(self);
 

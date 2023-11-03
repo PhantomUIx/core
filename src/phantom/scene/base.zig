@@ -1,6 +1,12 @@
+const std = @import("std");
 const vizops = @import("vizops");
 const Node = @import("node.zig");
 const Scene = @This();
+
+pub const Options = struct {
+    allocator: std.mem.Allocator,
+    frame_info: Node.FrameInfo,
+};
 
 pub const VTable = struct {
     sub: ?*const fn (*anyopaque, vizops.vector.Vector2(usize), vizops.vector.Vector2(usize)) *anyopaque,

@@ -1,6 +1,7 @@
 const std = @import("std");
 const vizops = @import("vizops");
 const Scene = @import("../scene/base.zig");
+const SceneBackendType = @import("../scene.zig").BackendType;
 const Base = @import("base.zig");
 const Surface = @This();
 
@@ -36,7 +37,7 @@ pub const VTable = struct {
     destroy: *const fn (*anyopaque) anyerror!void,
     info: *const fn (*anyopaque) anyerror!Info,
     updateInfo: *const fn (*anyopaque, Info, []std.meta.FieldEnum(Info)) anyerror!void,
-    createScene: *const fn (*anyopaque) anyerror!*Scene,
+    createScene: *const fn (*anyopaque, SceneBackendType) anyerror!*Scene,
 };
 
 vtable: *const VTable,
@@ -61,8 +62,8 @@ pub inline fn updateInfo(self: *Surface, val: Info, fields: []std.meta.FieldEnum
     return self.vtable.updateInfo(self.ptr, val, fields);
 }
 
-pub inline fn createScene(self: *Surface) !*Scene {
-    return self.vtable.createScene(self.ptr);
+pub inline fn createScene(self: *Surface, backendType: SceneBackendType) !*Scene {
+    return self.vtable.createScene(self.ptr, backendType);
 }
 
 pub fn format(self: *const Surface, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {

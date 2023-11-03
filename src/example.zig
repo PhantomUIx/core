@@ -49,7 +49,7 @@ pub fn main() !void {
         surface.deinit();
     }
 
-    const scene = try surface.createScene();
+    const scene = try surface.createScene(sceneBackendType);
 
     var flex = try phantom.scene.NodeFlex.new(alloc, .horizontal);
     defer flex.tree.node.deinit();
