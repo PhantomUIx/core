@@ -35,16 +35,16 @@ allocator: Allocator,
 options: Options,
 node: Node,
 
-pub fn create(args: std.StringHashMap(?*anyopaque)) !*Node {
+pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     const radius: f32 = @floatCast(@as(f64, @bitCast(@intFromPtr(args.get("radius") orelse return error.MissingKey))));
     const color: *vizops.vector.Float32Vector4 = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
-    return &(try new(args.allocator, .{
+    return &(try new(args.allocator, id orelse @returnAddress(), .{
         .radius = radius,
         .color = vizops.vector.Float32Vector4.init(color.value),
     })).node;
 }
 
-pub fn new(alloc: Allocator, options: Options) Allocator.Error!*NodeCircle {
+pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*NodeCircle {
     const self = try alloc.create(NodeCircle);
     self.* = .{
         .allocator = alloc,
@@ -52,7 +52,7 @@ pub fn new(alloc: Allocator, options: Options) Allocator.Error!*NodeCircle {
         .node = .{
             .ptr = self,
             .type = @typeName(NodeCircle),
-            .id = @returnAddress(),
+            .id = id orelse @returnAddress(),
             .vtable = &.{
                 .dupe = dupe,
                 .state = state,
@@ -78,7 +78,7 @@ fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
 
 fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
-    return try new(self.allocator, self.options);
+    return try new(self.allocator, @returnAddress(), self.options);
 }
 
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {

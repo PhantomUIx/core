@@ -65,11 +65,11 @@ node: Node,
 vtable: *const VTable,
 ptr: *anyopaque,
 
-pub inline fn init(comptime T: type, ptr: *anyopaque) Node {
+pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) Node {
     return .{
         .ptr = ptr,
         .type = @typeName(T),
-        .id = @returnAddress(),
+        .id = id orelse @returnAddress(),
         .vtable = &.{
             .dupe = dupe,
             .state = state,

@@ -126,11 +126,20 @@ pub inline fn deinit(self: *Node) void {
     if (self.vtable.deinit) |f| f(self.ptr);
 }
 
-pub fn formatName(self: *Node, writer: anytype) !void {
+pub fn formatName(self: *Node, alloc: std.mem.Allocator, writer: anytype) !void {
     if (builtin.mode == .Debug and !builtin.strip_debug_info) {
         const debug = try std.debug.getSelfDebugInfo();
         const mod = try debug.getModuleForAddress(self.id);
-        return std.fmt.format(writer, "{s}@{}", .{ self.type, mod });
+        const sym = try mod.getSymbolAtAddress(alloc, self.id);
+        defer sym.deinit(alloc);
+
+        try std.fmt.format(writer, "{s}@", .{self.type});
+
+        if (sym.line_info) |line| {
+            try std.fmt.format(writer, "{s}:{}.{}", .{ line.file_name, line.line, line.column });
+        } else {
+            try std.fmt.format(writer, "{s}", .{sym.symbol_name});
+        }
     } else {
         return std.fmt.format(writer, "{s}@{x}", .{ self.type, self.id });
     }

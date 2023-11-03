@@ -39,7 +39,7 @@ fn deinit(ctx: *anyopaque) void {
     self.base.allocator.destroy(self);
 }
 
-fn createNode(ctx: *anyopaque, typeName: []const u8, args: std.StringHashMap(?*anyopaque)) anyerror!*Node {
+fn createNode(ctx: *anyopaque, typeName: []const u8, id: usize, args: std.StringHashMap(?*anyopaque)) anyerror!*Node {
     _ = ctx;
-    return @import("../../../scene.zig").createNode(.headless, typeName, args);
+    return @import("../../../scene.zig").createNode(.headless, typeName, id, args);
 }

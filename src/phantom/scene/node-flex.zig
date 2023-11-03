@@ -10,7 +10,7 @@ tree: NodeTree,
 direction: Node.Axis,
 children: std.ArrayList(*Node),
 
-pub inline fn init(comptime T: type, ptr: *anyopaque) NodeTree {
+pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
     return .{
         .vtable = &.{
             .children = impl_children,
@@ -19,13 +19,13 @@ pub inline fn init(comptime T: type, ptr: *anyopaque) NodeTree {
             .deinit = impl_deinit,
         },
         .ptr = ptr,
-        .node = NodeTree.init(T, @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
+        .node = NodeTree.init(T, id orelse @returnAddress(), @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
     };
 }
 
-pub fn create(args: std.StringHashMap(?*anyopaque)) !*Node {
+pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     const direction: Node.Axis = @enumFromInt(@intFromPtr(args.get("direction") orelse return error.MissingKey));
-    var self = try new(args.allocator, direction);
+    var self = try new(args.allocator, id orelse @returnAddress(), direction);
 
     if (args.get("children")) |childrenPtr| {
         const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
@@ -35,10 +35,10 @@ pub fn create(args: std.StringHashMap(?*anyopaque)) !*Node {
     return &self.tree.node;
 }
 
-pub fn new(alloc: Allocator, direction: Node.Axis) Allocator.Error!*NodeFlex {
+pub fn new(alloc: Allocator, id: ?usize, direction: Node.Axis) Allocator.Error!*NodeFlex {
     const self = try alloc.create(NodeFlex);
     self.* = .{
-        .tree = init(NodeFlex, self),
+        .tree = init(NodeFlex, id orelse @returnAddress(), self),
         .direction = direction,
         .children = std.ArrayList(*Node).init(alloc),
     };
@@ -74,7 +74,7 @@ fn impl_overflow(ctx: *anyopaque, node: *Node) anyerror!void {
     var name = std.ArrayList(u8).init(self.children.allocator);
     defer name.deinit();
 
-    try node.formatName(name.writer());
+    try node.formatName(self.children.allocator, name.writer());
 
     std.debug.panic("Node {s} is overflowing", .{name.items});
 }
@@ -85,7 +85,7 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*anyopaque {
     errdefer self.children.allocator.destroy(d);
 
     d.* = .{
-        .tree = init(NodeFlex, d),
+        .tree = init(NodeFlex, @returnAddress(), d),
         .direction = self.direction,
         .children = try std.ArrayList(*Node).initCapacity(self.children.allocator, self.children.items.len),
     };

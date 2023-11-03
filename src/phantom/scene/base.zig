@@ -12,7 +12,7 @@ pub const VTable = struct {
     sub: ?*const fn (*anyopaque, vizops.vector.Vector2(usize), vizops.vector.Vector2(usize)) *anyopaque,
     frameInfo: *const fn (*anyopaque) Node.FrameInfo,
     deinit: ?*const fn (*anyopaque) void = null,
-    createNode: *const fn (*anyopaque, []const u8, std.StringHashMap(?*anyopaque)) anyerror!*Node,
+    createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(?*anyopaque)) anyerror!*Node,
 };
 
 allocator: std.mem.Allocator,
@@ -52,7 +52,7 @@ pub fn frame(self: *Scene, node: *Node) !bool {
     return false;
 }
 
-pub inline fn createNode(self: *Scene, T: anytype, args: anytype) !*Node {
+pub fn createNode(self: *Scene, T: anytype, args: anytype) !*Node {
     var argsMap = std.StringHashMap(?*anyopaque).init(self.allocator);
     defer argsMap.deinit();
 
@@ -74,5 +74,5 @@ pub inline fn createNode(self: *Scene, T: anytype, args: anytype) !*Node {
         }
     }
 
-    return self.vtable.createNode(self.ptr, @tagName(T), argsMap);
+    return self.vtable.createNode(self.ptr, @tagName(T), @returnAddress(), argsMap);
 }

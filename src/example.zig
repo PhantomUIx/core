@@ -62,6 +62,13 @@ pub fn main() !void {
     });
     defer flex.deinit();
 
+    var flexName = std.ArrayList(u8).init(alloc);
+    defer flexName.deinit();
+
+    try flex.formatName(alloc, flexName.writer());
+
+    std.debug.print("Rendering {s} to the scene\n", .{flexName.items});
+
     _ = try @constCast(scene).frame(flex);
 
     const availSize = @constCast(scene).frameInfo().size.res.sub(flex.last_state.?.size);
