@@ -46,7 +46,7 @@ fn impl_outputs(ctx: *anyopaque) anyerror!std.ArrayList(*Output) {
     var outputs = try std.ArrayList(*Output).initCapacity(self.outputs.allocator, self.outputs.items.len);
 
     for (self.outputs.items) |output| {
-        outputs.appendAssumeCapacity(@constCast(&(try output.dupe()).base));
+        outputs.appendAssumeCapacity(@constCast(&output.base));
     }
 
     return outputs;

@@ -16,6 +16,7 @@ pub const State = enum {
     fullscreen,
     resizing,
     activated,
+    mapped,
 };
 
 pub const Info = struct {
@@ -23,7 +24,8 @@ pub const Info = struct {
     title: ?[]const u8 = null,
     class: ?[]const u8 = null,
     toplevel: bool = false,
-    states: []State = &.{},
+    depth: ?u8 = null,
+    states: []const State = &.{},
     size: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),
     maxSize: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),
     minSize: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),

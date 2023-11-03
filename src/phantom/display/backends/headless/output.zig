@@ -4,11 +4,12 @@ const vizops = @import("vizops");
 const Base = @import("../../base.zig");
 const Output = @import("../../output.zig");
 const Surface = @import("../../surface.zig");
+const HeadlessSurface = @import("surface.zig");
 const HeadlessOutput = @This();
 
 base: Output,
-allocator: Allocator,
 info: Output.Info,
+surfaces: std.ArrayList(*HeadlessSurface),
 
 pub fn new(alloc: Allocator, displayKind: Base.Kind, info: Output.Info) Allocator.Error!*HeadlessOutput {
     const self = try alloc.create(HeadlessOutput);
@@ -27,15 +28,15 @@ pub fn new(alloc: Allocator, displayKind: Base.Kind, info: Output.Info) Allocato
             .displayKind = displayKind,
             .type = @typeName(HeadlessOutput),
         },
-        .allocator = alloc,
         .info = info,
+        .surfaces = std.ArrayList(*HeadlessSurface).init(alloc),
     };
     return self;
 }
 
 pub fn dupe(self: *HeadlessOutput) Allocator.Error!*HeadlessOutput {
-    const d = try self.allocator.create(HeadlessOutput);
-    errdefer self.allocator.destroy(d);
+    const d = try self.surfaces.allocator.create(HeadlessOutput);
+    errdefer self.surfaces.allocator.destroy(d);
 
     d.* = .{
         .base = .{
@@ -44,19 +45,34 @@ pub fn dupe(self: *HeadlessOutput) Allocator.Error!*HeadlessOutput {
             .displayKind = self.base.displayKind,
             .type = @typeName(HeadlessOutput),
         },
-        .allocator = self.allocator,
         .info = self.info,
+        .surfaces = try std.ArrayList(*HeadlessSurface).initCapacity(self.surfaces.allocator, self.surfaces.items.len),
     };
+    errdefer d.surfaces.deinit();
+
+    for (self.surfaces.items) |surface| {
+        d.surfaces.appendAssumeCapacity(try surface.dupe());
+    }
     return d;
 }
 
 fn impl_surfaces(ctx: *anyopaque) anyerror!std.ArrayList(*Surface) {
     const self: *HeadlessOutput = @ptrCast(@alignCast(ctx));
-    return std.ArrayList(*Surface).init(self.allocator);
+    var surfaces = try std.ArrayList(*Surface).initCapacity(self.surfaces.allocator, self.surfaces.items.len);
+    errdefer surfaces.deinit();
+
+    for (self.surfaces.items) |surface| {
+        surfaces.appendAssumeCapacity(@constCast(&surface.base));
+    }
+    return surfaces;
 }
 
-fn impl_create_surface(_: *anyopaque) anyerror!*Surface {
-    return error.NotImplemented;
+fn impl_create_surface(ctx: *anyopaque, kind: Surface.Kind, info: Surface.Info) anyerror!*Surface {
+    const self: *HeadlessOutput = @ptrCast(@alignCast(ctx));
+    const surface = try HeadlessSurface.new(self.surfaces.allocator, self.base.displayKind, kind, info);
+    try self.surfaces.append(surface);
+    surface.output = self;
+    return &surface.base;
 }
 
 fn impl_info(ctx: *anyopaque) anyerror!Output.Info {
@@ -72,5 +88,8 @@ fn impl_update_info(_: *anyopaque, info: Output.Info, fields: []std.meta.FieldEn
 
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *HeadlessOutput = @ptrCast(@alignCast(ctx));
-    self.allocator.destroy(self);
+    const alloc = self.surfaces.allocator;
+    for (self.surfaces.items) |surface| @constCast(&surface.base).deinit();
+    self.surfaces.deinit();
+    alloc.destroy(self);
 }

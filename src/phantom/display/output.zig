@@ -37,7 +37,7 @@ pub const Info = struct {
 
 pub const VTable = struct {
     surfaces: *const fn (*anyopaque) anyerror!std.ArrayList(*Surface),
-    createSurface: *const fn (*anyopaque) anyerror!*Surface,
+    createSurface: *const fn (*anyopaque, Surface.Kind, Surface.Info) anyerror!*Surface,
     info: *const fn (*anyopaque) anyerror!Info,
     updateInfo: *const fn (*anyopaque, Info, []std.meta.FieldEnum(Info)) anyerror!void,
     deinit: ?*const fn (*anyopaque) void,
@@ -52,8 +52,8 @@ pub inline fn surfaces(self: *Output) !std.ArrayList(*Surface) {
     return self.vtable.surfaces(self.ptr);
 }
 
-pub inline fn createSurface(self: *Output) !*Surface {
-    return self.vtable.createSurface(self.ptr);
+pub inline fn createSurface(self: *Output, kind: Surface.Kind, val: Surface.Info) !*Surface {
+    return self.vtable.createSurface(self.ptr, kind, val);
 }
 
 pub inline fn info(self: *Output) !Info {

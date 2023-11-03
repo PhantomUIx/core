@@ -1,3 +1,5 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
 const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const HeadlessScene = @This();
@@ -6,23 +8,27 @@ pub const Options = struct {
     frame_info: Node.FrameInfo,
 };
 
+allocator: Allocator,
 frame_info: Node.FrameInfo,
+base: Scene,
 
-pub fn init(options: Options) HeadlessScene {
-    return .{
+pub fn new(alloc: Allocator, options: Options) Allocator.Error!*HeadlessScene {
+    const self = try alloc.create(HeadlessScene);
+    errdefer alloc.destroy(self);
+
+    self.* = .{
+        .allocator = alloc,
         .frame_info = options.frame_info,
-    };
-}
-
-pub fn scene(self: *HeadlessScene) Scene {
-    return .{
-        .ptr = self,
-        .vtable = &.{
-            .sub = null,
-            .frameInfo = frameInfo,
+        .base = .{
+            .ptr = self,
+            .vtable = &.{
+                .sub = null,
+                .frameInfo = frameInfo,
+            },
+            .subscene = null,
         },
-        .subscene = null,
     };
+    return self;
 }
 
 fn frameInfo(ctx: *anyopaque) Node.FrameInfo {
