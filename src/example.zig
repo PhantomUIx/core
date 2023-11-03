@@ -69,9 +69,9 @@ pub fn main() !void {
 
     std.debug.print("Rendering {s} to the scene\n", .{flexName.items});
 
-    _ = try @constCast(scene).frame(flex);
+    _ = try scene.frame(flex);
 
-    const availSize = @constCast(scene).frameInfo().size.res.sub(flex.last_state.?.size);
+    const availSize = scene.frameInfo().size.res.sub(flex.last_state.?.size);
 
     std.debug.print("Scene has {} horizontal pixels and {} vertical pixels left over\n", .{ availSize.value[0], availSize.value[1] });
     std.debug.print("{}\n", .{flex});
