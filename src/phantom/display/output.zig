@@ -19,7 +19,8 @@ pub const Info = struct {
         _ = fmt;
         _ = options;
 
-        try writer.print("{{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .depth = {} }}", .{
+        try writer.print("{s} {{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .depth = {} }}", .{
+            @typeName(Info),
             self.enable,
             self.size.phys.value[0],
             self.size.phys.value[1],
