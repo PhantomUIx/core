@@ -55,7 +55,7 @@ pub fn main() !void {
         .direction = phantom.scene.Node.Axis.horizontal,
         .children = &[_]*phantom.scene.Node{
             try scene.createNode(.NodeCircle, .{
-                .degree = 120,
+                .radius = @as(f32, 32.0),
                 .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
             }),
         },

@@ -60,6 +60,7 @@ pub inline fn createNode(self: *Scene, T: anytype, args: anytype) !*Node {
         const field = @field(args, fieldInfo.name);
         switch (@typeInfo(@TypeOf(field))) {
             .Int, .ComptimeInt => try argsMap.put(fieldInfo.name, @ptrFromInt(field)),
+            .Float, .ComptimeFloat => try argsMap.put(fieldInfo.name, @ptrFromInt(@as(usize, @bitCast(@as(f64, @floatCast(field)))))),
             .Enum => try argsMap.put(fieldInfo.name, @ptrFromInt(@intFromEnum(field))),
             .Struct => try argsMap.put(fieldInfo.name, @constCast(&field)),
             .Pointer => |p| switch (@typeInfo(p.child)) {
