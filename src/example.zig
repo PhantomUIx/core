@@ -58,6 +58,10 @@ pub fn main() !void {
                 .radius = @as(f32, 32.0),
                 .color = vizops.vector.Float32Vector4.init(.{ 1.0, 0.0, 0.0, 1.0 }),
             }),
+            try scene.createNode(.NodeRect, .{
+                .color = vizops.vector.Float32Vector4.init(.{ 0.0, 1.0, 0.0, 1.0 }),
+                .size = vizops.vector.Float32Vector2.init(.{ 10.0, 10.0 }),
+            }),
         },
     });
     defer flex.deinit();

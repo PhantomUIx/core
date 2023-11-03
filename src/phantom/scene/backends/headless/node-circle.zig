@@ -77,9 +77,9 @@ fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
     self.deinit(alloc);
 }
 
-fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
+fn dupe(ctx: *anyopaque) anyerror!*Node {
     const self: *NodeCircle = @ptrCast(@alignCast(ctx));
-    return try new(self.allocator, @returnAddress(), self.options);
+    return &(try new(self.allocator, @returnAddress(), self.options)).node;
 }
 
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {

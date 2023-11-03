@@ -57,7 +57,7 @@ pub const FrameInfo = struct {
 };
 
 pub const VTable = struct {
-    dupe: *const fn (*anyopaque) anyerror!*anyopaque,
+    dupe: *const fn (*anyopaque) anyerror!*Node,
     state: *const fn (*anyopaque, FrameInfo) anyerror!State,
     preFrame: *const fn (*anyopaque, FrameInfo, *Scene) anyerror!State,
     frame: *const fn (*anyopaque, *Scene) anyerror!void,
@@ -94,7 +94,7 @@ type: []const u8,
 id: usize,
 last_state: ?State = null,
 
-pub inline fn dupe(self: *Node) anyerror!*anyopaque {
+pub inline fn dupe(self: *Node) anyerror!*Node {
     return self.vtable.dupe(self.ptr);
 }
 

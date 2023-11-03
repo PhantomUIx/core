@@ -14,7 +14,7 @@ pub const Child = struct {
 pub const VTable = struct {
     children: *const fn (*anyopaque, Node.FrameInfo) anyerror!std.ArrayList(Child),
     overflow: ?*const fn (*anyopaque, node: *Node) anyerror!void,
-    dupe: *const fn (*anyopaque) anyerror!*anyopaque,
+    dupe: *const fn (*anyopaque) anyerror!*Node,
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?Allocator) anyerror!std.ArrayList(u8) = null,
 };
@@ -94,7 +94,7 @@ fn stateFree(ctx: *anyopaque, _: std.mem.Allocator) void {
     self.deinit();
 }
 
-fn dupe(ctx: *anyopaque) anyerror!*anyopaque {
+fn dupe(ctx: *anyopaque) anyerror!*Node {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     return self.vtable.dupe(self.ptr);
 }

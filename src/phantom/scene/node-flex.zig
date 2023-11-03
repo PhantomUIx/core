@@ -80,7 +80,7 @@ fn impl_overflow(ctx: *anyopaque, node: *Node) anyerror!void {
     std.debug.panic("Node {s} is overflowing", .{name.items});
 }
 
-fn impl_dupe(ctx: *anyopaque) anyerror!*anyopaque {
+fn impl_dupe(ctx: *anyopaque) anyerror!*Node {
     const self: *NodeFlex = @ptrCast(@alignCast(ctx));
     const d = try self.children.allocator.create(NodeFlex);
     errdefer self.children.allocator.destroy(d);
@@ -94,11 +94,9 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*anyopaque {
     errdefer d.children.deinit();
 
     for (self.children.items) |child| {
-        _ = child;
-        // FIXME: anyopaque error
-        //d.children.appendAssumeCapacity(try child.dupe());
+        d.children.appendAssumeCapacity(try child.dupe());
     }
-    return d;
+    return &d.tree.node;
 }
 
 fn impl_deinit(ctx: *anyopaque) void {
