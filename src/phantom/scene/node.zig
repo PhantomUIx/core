@@ -4,11 +4,6 @@ const vizops = @import("vizops");
 const Scene = @import("base.zig");
 const Node = @This();
 
-pub const Axis = enum {
-    horizontal,
-    vertical,
-};
-
 pub const FrameInfo = struct {
     size: struct {
         phys: vizops.vector.Float32Vector2,

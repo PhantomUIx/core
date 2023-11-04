@@ -53,7 +53,7 @@ pub fn main() !void {
     const scene = try surface.createScene(sceneBackendType);
 
     const flex = try scene.createNode(.NodeFlex, .{
-        .direction = phantom.scene.Node.Axis.horizontal,
+        .direction = phantom.painting.Axis.horizontal,
         .children = &[_]*phantom.scene.Node{
             try scene.createNode(.NodeArc, .{
                 .radius = @as(f32, 32.0),

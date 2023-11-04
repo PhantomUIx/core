@@ -1,13 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const vizops = @import("vizops");
+const painting = @import("../painting.zig");
 const Scene = @import("base.zig");
 const Node = @import("node.zig");
 const NodeTree = @import("node-tree.zig");
 const NodeFlex = @This();
 
 tree: NodeTree,
-direction: Node.Axis,
+direction: painting.Axis,
 children: std.ArrayList(*Node),
 
 pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
@@ -25,7 +26,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
 }
 
 pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
-    const direction: Node.Axis = @enumFromInt(@intFromPtr(args.get("direction") orelse return error.MissingKey));
+    const direction: painting.Axis = @enumFromInt(@intFromPtr(args.get("direction") orelse return error.MissingKey));
     var self = try new(args.allocator, id orelse @returnAddress(), direction);
 
     if (args.get("children")) |childrenPtr| {
@@ -36,7 +37,7 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     return &self.tree.node;
 }
 
-pub fn new(alloc: Allocator, id: ?usize, direction: Node.Axis) Allocator.Error!*NodeFlex {
+pub fn new(alloc: Allocator, id: ?usize, direction: painting.Axis) Allocator.Error!*NodeFlex {
     const self = try alloc.create(NodeFlex);
     self.* = .{
         .tree = init(NodeFlex, id orelse @returnAddress(), self),
@@ -112,6 +113,6 @@ fn impl_format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     var output = std.ArrayList(u8).init(self.children.allocator);
     errdefer output.deinit();
 
-    try output.writer().print("{{ .direction = {?s}, .children = [{}] {any} }}", .{ std.enums.tagName(Node.Axis, self.direction), self.children.items.len, self.children.items });
+    try output.writer().print("{{ .direction = {?s}, .children = [{}] {any} }}", .{ std.enums.tagName(painting.Axis, self.direction), self.children.items.len, self.children.items });
     return output;
 }

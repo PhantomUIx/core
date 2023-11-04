@@ -1,9 +1,15 @@
 const std = @import("std");
 const vizops = @import("vizops");
+const painting = @import("../painting.zig");
 const Scene = @import("../scene/base.zig");
 const SceneBackendType = @import("../scene.zig").BackendType;
 const Base = @import("base.zig");
 const Surface = @This();
+
+pub const Contents = union(enum) {
+    fb: *painting.fb.Base,
+    scene: *Scene,
+};
 
 pub const Kind = enum {
     output,
