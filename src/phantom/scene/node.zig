@@ -59,6 +59,7 @@ pub const VTable = struct {
     postFrame: ?*const fn (*anyopaque, *Scene) anyerror!void = null,
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?std.mem.Allocator) anyerror!std.ArrayList(u8) = null,
+    cast: ?*const fn (*anyopaque, []const u8) error{BadCast}!*anyopaque = null,
 };
 
 pub const State = struct {
@@ -159,4 +160,9 @@ pub fn formatName(self: *const Node, optAlloc: ?std.mem.Allocator, writer: anyty
     } else {
         return std.fmt.format(writer, "{s}@{x}", .{ self.type, self.id });
     }
+}
+
+pub fn cast(self: *Node, comptime T: type) error{BadCast}!*T {
+    if (self.vtable.cast) |f| return f(self.ptr, @typeName(T));
+    return error.BadCast;
 }
