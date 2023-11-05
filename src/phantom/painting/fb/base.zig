@@ -13,6 +13,7 @@ pub const VTable = struct {
     read: ?*const fn (*anyopaque, usize) anyerror![*]const u8 = null,
     write: ?*const fn (*anyopaque, usize, []const u8) anyerror!void = null,
     dupe: *const fn (*anyopaque) anyerror!*Base,
+    commit: ?*const fn (*anyopaque) anyerror!void,
     deinit: ?*const fn (*anyopaque) void,
 };
 
@@ -45,6 +46,10 @@ pub inline fn write(self: *Base, i: usize, val: []const u8) !void {
 
 pub inline fn dupe(self: *Base) !*Base {
     return self.vtable.dupe(self.ptr);
+}
+
+pub inline fn commit(self: *Base) !void {
+    if (self.vtable.commit) |f| return f(self.ptr);
 }
 
 pub inline fn deinit(self: *Base) void {
