@@ -4,7 +4,7 @@ const Base = @This();
 pub const Info = struct {
     res: vizops.vector.UsizeVector2,
     size: usize,
-    depth: u8,
+    format: u32,
 };
 
 pub const VTable = struct {

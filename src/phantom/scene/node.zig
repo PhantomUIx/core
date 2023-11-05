@@ -11,13 +11,13 @@ pub const FrameInfo = struct {
         avail: vizops.vector.UsizeVector2,
     },
     scale: vizops.vector.Float32Vector2,
-    depth: u8, // TODO: use depth info from vizops
+    format: u32,
 
     pub const Options = struct {
         res: vizops.vector.UsizeVector2,
         scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(1.0),
         physicalSize: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.zero(),
-        depth: u8,
+        format: u32,
     };
 
     pub fn init(options: Options) FrameInfo {
@@ -28,7 +28,7 @@ pub const FrameInfo = struct {
                 .avail = options.res,
             },
             .scale = options.scale,
-            .depth = options.depth,
+            .format = options.format,
         };
     }
 
@@ -38,7 +38,7 @@ pub const FrameInfo = struct {
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
-            self.depth == other.depth,
+            self.format == other.format,
         }) == 5;
     }
 
@@ -47,7 +47,7 @@ pub const FrameInfo = struct {
             .phys = self.size.phys,
             .res = self.size.res,
             .avail = availSize,
-        }, .scale = self.scale, .depth = self.depth };
+        }, .scale = self.scale, .format = self.format };
     }
 };
 

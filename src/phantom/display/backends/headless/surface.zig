@@ -86,7 +86,7 @@ fn impl_create_scene(ctx: *anyopaque, backendType: SceneModule.BackendType) anye
                 .res = self.info.size,
                 .scale = outputInfo.scale,
                 .physicalSize = outputInfo.size.phys.div(self.info.size.cast(f32)),
-                .depth = self.info.depth orelse outputInfo.depth,
+                .format = self.info.format orelse outputInfo.format,
             }),
         });
         return self.scene.?;
