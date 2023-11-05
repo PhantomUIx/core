@@ -2,7 +2,7 @@ const vizops = @import("vizops");
 const Base = @This();
 
 pub const Info = struct {
-    res: vizops.vector.Vector2(usize),
+    res: vizops.vector.UsizeVector2,
     size: usize,
     depth: u8,
 };

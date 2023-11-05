@@ -9,7 +9,7 @@ pub const Options = struct {
 };
 
 pub const VTable = struct {
-    sub: ?*const fn (*anyopaque, vizops.vector.Vector2(usize), vizops.vector.Vector2(usize)) *anyopaque,
+    sub: ?*const fn (*anyopaque, vizops.vector.UsizeVector2, vizops.vector.UsizeVector2) *anyopaque,
     frameInfo: *const fn (*anyopaque) Node.FrameInfo,
     deinit: ?*const fn (*anyopaque) void = null,
     createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(?*anyopaque)) anyerror!*Node,
@@ -19,11 +19,11 @@ allocator: std.mem.Allocator,
 vtable: *const VTable,
 ptr: *anyopaque,
 subscene: ?struct {
-    pos: vizops.vector.Vector2(usize),
-    size: vizops.vector.Vector2(usize),
+    pos: vizops.vector.UsizeVector2,
+    size: vizops.vector.UsizeVector2,
 } = null,
 
-pub fn sub(self: *Scene, pos: vizops.vector.Vector2(usize), size: vizops.vector.Vector2(usize)) Scene {
+pub fn sub(self: *Scene, pos: vizops.vector.UsizeVector2, size: vizops.vector.UsizeVector2) Scene {
     return .{
         .allocator = self.allocator,
         .vtable = self.vtable,

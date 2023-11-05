@@ -52,7 +52,7 @@ fn impl_children(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!std.ArrayL
     var v = try std.ArrayList(NodeTree.Child).initCapacity(self.children.allocator, self.children.items.len);
     errdefer v.deinit();
 
-    var pos = vizops.vector.Vector2(usize).zero();
+    var pos = vizops.vector.UsizeVector2.zero();
 
     for (self.children.items) |child| {
         const cstate = try child.state(frameInfo);

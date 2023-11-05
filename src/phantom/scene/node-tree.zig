@@ -8,7 +8,7 @@ const NodeTree = @This();
 
 pub const Child = struct {
     node: *Node,
-    pos: vizops.vector.Vector2(usize),
+    pos: vizops.vector.UsizeVector2,
 };
 
 pub const VTable = struct {
@@ -21,7 +21,7 @@ pub const VTable = struct {
 
 const ChildState = struct {
     state: Node.State,
-    pos: vizops.vector.Vector2(usize),
+    pos: vizops.vector.UsizeVector2,
 
     pub fn equal(self: ChildState, other: ChildState) bool {
         return std.simd.countTrues(@Vector(2, bool){
@@ -101,7 +101,7 @@ fn dupe(ctx: *anyopaque) anyerror!*Node {
 
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
-    var size = vizops.vector.Vector2(usize).zero();
+    var size = vizops.vector.UsizeVector2.zero();
 
     const children = try self.vtable.children(self.ptr, frameInfo);
     defer children.deinit();
@@ -110,7 +110,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
-        if (std.simd.countTrues(childSize.value == vizops.vector.Vector2(usize).zero().value) == 2 and self.vtable.overflow != null) {
+        if (std.simd.countTrues(childSize.value == vizops.vector.UsizeVector2.zero().value) == 2 and self.vtable.overflow != null) {
             const overflow = self.vtable.overflow.?;
             try overflow(self.ptr, child.node);
         }
@@ -138,7 +138,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 
 fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!Node.State {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
-    var size = vizops.vector.Vector2(usize).zero();
+    var size = vizops.vector.UsizeVector2.zero();
 
     const children = try self.vtable.children(self.ptr, frameInfo);
     defer children.deinit();
@@ -147,7 +147,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
-        if (std.simd.countTrues(childSize.value == vizops.vector.Vector2(usize).zero().value) == 2 and self.vtable.overflow != null) {
+        if (std.simd.countTrues(childSize.value == vizops.vector.UsizeVector2.zero().value) == 2 and self.vtable.overflow != null) {
             const overflow = self.vtable.overflow.?;
             try overflow(self.ptr, child.node);
         }

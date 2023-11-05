@@ -33,9 +33,9 @@ pub const Info = struct {
     toplevel: bool = false,
     depth: ?u8 = null,
     states: []const State = &.{},
-    size: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),
-    maxSize: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),
-    minSize: vizops.vector.Vector2(usize) = vizops.vector.Vector2(usize).zero(),
+    size: vizops.vector.UsizeVector2 = vizops.vector.UsizeVector2.zero(),
+    maxSize: vizops.vector.UsizeVector2 = vizops.vector.UsizeVector2.zero(),
+    minSize: vizops.vector.UsizeVector2 = vizops.vector.UsizeVector2.zero(),
 };
 
 pub const VTable = struct {

@@ -52,7 +52,7 @@ fn impl_children(ctx: *anyopaque, _: Node.FrameInfo) anyerror!std.ArrayList(Node
     for (self.children.items) |child| {
         v.appendAssumeCapacity(.{
             .node = child,
-            .pos = vizops.vector.Vector2(usize).zero(),
+            .pos = vizops.vector.UsizeVector2.zero(),
         });
     }
 

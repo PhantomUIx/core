@@ -1,6 +1,6 @@
 const vizops = @import("vizops");
 const Node = @import("../scene/node.zig");
-const UsizeVector = vizops.vector.Vector2(usize);
+const UsizeVector = vizops.vector.UsizeVector2;
 
 pub fn rel(frameInfo: Node.FrameInfo, value: vizops.vector.Float32Vector2) UsizeVector {
     return UsizeVector.init([_]usize{

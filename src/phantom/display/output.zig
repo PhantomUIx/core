@@ -8,7 +8,7 @@ pub const Info = struct {
     enable: bool = false,
     size: struct {
         phys: vizops.vector.Float32Vector2,
-        res: vizops.vector.Vector2(usize),
+        res: vizops.vector.UsizeVector2,
     },
     scale: vizops.vector.Float32Vector2,
     name: []const u8 = "",
