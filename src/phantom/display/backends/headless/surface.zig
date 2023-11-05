@@ -85,10 +85,7 @@ fn impl_create_scene(ctx: *anyopaque, backendType: SceneModule.BackendType) anye
             .frame_info = Node.FrameInfo.init(.{
                 .res = self.info.size,
                 .scale = outputInfo.scale,
-                .physicalSize = vizops.vector.Float32Vector2.init(.{
-                    outputInfo.size.phys.value[0] / @as(f32, @floatFromInt(self.info.size.value[0])),
-                    outputInfo.size.phys.value[1] / @as(f32, @floatFromInt(self.info.size.value[1])),
-                }),
+                .physicalSize = outputInfo.size.phys.div(self.info.size.cast(f32)),
                 .depth = self.info.depth orelse outputInfo.depth,
             }),
         });

@@ -62,7 +62,7 @@ fn impl_children(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!std.ArrayL
             .pos = pos,
         });
 
-        pos = pos.add(vizops.vector.Vector2(usize).init(.{
+        pos = pos.add(vizops.vector.UsizeVector2.init([_]usize{
             if (self.direction == .horizontal) cstate.size.value[0] else 0,
             if (self.direction == .vertical) cstate.size.value[1] else 0,
         }));

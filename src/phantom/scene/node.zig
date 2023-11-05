@@ -7,15 +7,15 @@ const Node = @This();
 pub const FrameInfo = struct {
     size: struct {
         phys: vizops.vector.Float32Vector2,
-        res: vizops.vector.Vector2(usize),
-        avail: vizops.vector.Vector2(usize),
+        res: vizops.vector.UsizeVector2,
+        avail: vizops.vector.UsizeVector2,
     },
     scale: vizops.vector.Float32Vector2,
     depth: u8, // TODO: use depth info from vizops
 
     pub const Options = struct {
-        res: vizops.vector.Vector2(usize),
-        scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(.{ 1.0, 1.0 }),
+        res: vizops.vector.UsizeVector2,
+        scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(1.0),
         physicalSize: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.zero(),
         depth: u8,
     };
@@ -34,15 +34,15 @@ pub const FrameInfo = struct {
 
     pub fn equal(self: FrameInfo, other: FrameInfo) bool {
         return std.simd.countTrues(@Vector(5, bool){
-            std.simd.countTrues(self.size.phys.value == other.size.phys.value) == 2,
-            std.simd.countTrues(self.size.res.value == other.size.res.value) == 2,
-            std.simd.countTrues(self.size.avail.value == other.size.avail.value) == 2,
-            std.simd.countTrues(self.scale.value == other.scale.value) == 2,
+            self.size.phys.eq(other.size.phys),
+            self.size.res.eq(other.size.res),
+            self.size.avail.eq(other.size.avail),
+            self.scale.eq(other.scale),
             self.depth == other.depth,
         }) == 5;
     }
 
-    pub fn child(self: FrameInfo, availSize: vizops.vector.Vector2(usize)) FrameInfo {
+    pub fn child(self: FrameInfo, availSize: vizops.vector.UsizeVector2) FrameInfo {
         return .{ .size = .{
             .phys = self.size.phys,
             .res = self.size.res,
@@ -63,7 +63,7 @@ pub const VTable = struct {
 };
 
 pub const State = struct {
-    size: vizops.vector.Vector2(usize),
+    size: vizops.vector.UsizeVector2,
     frame_info: FrameInfo,
     ptr: ?*anyopaque = null,
     allocator: ?std.mem.Allocator = null,
@@ -76,7 +76,7 @@ pub const State = struct {
 
     pub fn equal(self: State, other: State) bool {
         return std.simd.countTrues(@Vector(4, bool){
-            std.simd.countTrues(self.size.value == other.size.value) == 2,
+            self.size.eq(other.size),
             self.frame_info.equal(other.frame_info),
             self.ptr == other.ptr,
             if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else true,

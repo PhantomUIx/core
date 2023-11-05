@@ -81,25 +81,18 @@ fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
 }
 
 fn calcSize(self: *NodeArc) vizops.vector.Float32Vector2 {
-    const endpoint1 = vizops.vector.Float32Vector2.init(.{
+    const endpoint1 = vizops.vector.Float32Vector2.init([_]f32{
         self.options.radius * std.math.cos(self.options.angles.value[0]),
         self.options.radius * std.math.sin(self.options.angles.value[0]),
     });
 
-    const endpoint2 = vizops.vector.Float32Vector2.init(.{
+    const endpoint2 = vizops.vector.Float32Vector2.init([_]f32{
         self.options.radius * std.math.cos(self.options.angles.value[1]),
         self.options.radius * std.math.sin(self.options.angles.value[1]),
     });
 
-    var max = vizops.vector.Float32Vector2.init(.{
-        @max(endpoint1.value[0], endpoint2.value[0]),
-        @max(endpoint1.value[1], endpoint2.value[1]),
-    });
-
-    var min = vizops.vector.Float32Vector2.init(.{
-        @min(endpoint1.value[0], endpoint2.value[0]),
-        @min(endpoint1.value[1], endpoint2.value[1]),
-    });
+    var max = endpoint1.max(endpoint2);
+    var min = endpoint1.min(endpoint2);
 
     if ((self.options.angles.value[0] <= 0 and self.options.angles.value[1] >= 0) or
         (self.options.angles.value[0] <= 2 * std.math.pi and self.options.angles.value[1] >= 2 * std.math.pi))
