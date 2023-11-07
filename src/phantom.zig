@@ -2,6 +2,7 @@ const root = @import("root");
 const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports").import(@This());
 
 pub const display = @import("phantom/display.zig");
+pub const gpu = @import("phantom/gpu.zig");
 pub const math = @import("phantom/math.zig");
 pub const painting = @import("phantom/painting.zig");
 pub const scene = @import("phantom/scene.zig");

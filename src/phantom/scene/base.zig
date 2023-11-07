@@ -13,6 +13,8 @@ pub const VTable = struct {
     frameInfo: *const fn (*anyopaque) Node.FrameInfo,
     deinit: ?*const fn (*anyopaque) void = null,
     createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(?*anyopaque)) anyerror!*Node,
+    preFrame: ?*const fn (*anyopaque, *Node) anyerror!void = null,
+    postFrame: ?*const fn (*anyopaque, *Node) anyerror!void = null,
 };
 
 allocator: std.mem.Allocator,
@@ -44,11 +46,17 @@ pub inline fn deinit(self: *Scene) void {
 }
 
 pub fn frame(self: *Scene, node: *Node) !bool {
+    if (self.vtable.preFrame) |f| try f(self.ptr, node);
+
     if (try node.preFrame(self.frameInfo(), self)) {
         try node.frame(self);
         try node.postFrame(self);
+
+        if (self.vtable.postFrame) |f| try f(self.ptr, node);
         return true;
     }
+
+    if (self.vtable.postFrame) |f| try f(self.ptr, node);
     return false;
 }
 
