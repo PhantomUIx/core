@@ -1,11 +1,19 @@
 const std = @import("std");
 const vizops = @import("vizops");
+const GpuSurface = @import("../gpu/surface.zig");
+const fb = @import("../painting/fb.zig");
 const Node = @import("node.zig");
 const Scene = @This();
+
+pub const Target = union(enum) {
+    surface: *GpuSurface,
+    fb: *fb.Base,
+};
 
 pub const Options = struct {
     allocator: std.mem.Allocator,
     frame_info: Node.FrameInfo,
+    target: ?Target,
 };
 
 pub const VTable = struct {

@@ -88,6 +88,8 @@ fn impl_create_scene(ctx: *anyopaque, backendType: SceneModule.BackendType) anye
                 .physicalSize = outputInfo.size.phys.div(self.info.size.cast(f32)),
                 .format = self.info.format orelse outputInfo.format,
             }),
+            // TODO: determine if we should use the GPU or not
+            .target = null,
         });
         return self.scene.?;
     }
