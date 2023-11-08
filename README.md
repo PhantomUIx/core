@@ -1,2 +1,3 @@
 # Phantom UI
-A truly cross platform GUI toolkit for Zig.
+
+A truly cross-platform GUI toolkit for Zig.
