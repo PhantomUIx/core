@@ -2,6 +2,10 @@ const std = @import("std");
 const Device = @import("device.zig");
 const Base = @This();
 
+pub const Options = struct {
+    allocator: std.mem.Allocator,
+};
+
 pub const VTable = struct {
     enumerate: *const fn (*anyopaque) anyerror!std.ArrayList(*Device),
     dupe: *const fn (*anyopaque) anyerror!*Base,
