@@ -8,6 +8,13 @@ const Scene = @This();
 pub const Target = union(enum) {
     surface: *GpuSurface,
     fb: *fb.Base,
+
+    pub fn deinit(self: Target) void {
+        switch (self) {
+            .surface => |s| s.deinit(),
+            .fb => |f| f.deinit(),
+        }
+    }
 };
 
 pub const Options = struct {
@@ -22,7 +29,7 @@ pub const VTable = struct {
     deinit: ?*const fn (*anyopaque) void = null,
     createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(?*anyopaque)) anyerror!*Node,
     preFrame: ?*const fn (*anyopaque, *Node) anyerror!void = null,
-    postFrame: ?*const fn (*anyopaque, *Node) anyerror!void = null,
+    postFrame: ?*const fn (*anyopaque, *Node, bool) anyerror!void = null,
 };
 
 allocator: std.mem.Allocator,
@@ -60,11 +67,11 @@ pub fn frame(self: *Scene, node: *Node) !bool {
         try node.frame(self);
         try node.postFrame(self);
 
-        if (self.vtable.postFrame) |f| try f(self.ptr, node);
+        if (self.vtable.postFrame) |f| try f(self.ptr, node, true);
         return true;
     }
 
-    if (self.vtable.postFrame) |f| try f(self.ptr, node);
+    if (self.vtable.postFrame) |f| try f(self.ptr, node, false);
     return false;
 }
 

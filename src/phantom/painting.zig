@@ -3,4 +3,6 @@ pub const Axis = enum {
     vertical,
 };
 
+pub const Blt = enum { from, to };
+
 pub const fb = @import("painting/fb.zig");

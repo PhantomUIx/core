@@ -1,9 +1,9 @@
 const std = @import("std");
 const vizops = @import("vizops");
 const fb = @import("../painting/fb.zig");
+const Blt = @import("../painting.zig").Blt;
+const Device = @import("device.zig");
 const Surface = @This();
-
-pub const Blt = enum { from, to };
 
 pub const Info = struct {
     format: u32,
@@ -18,6 +18,7 @@ pub const VTable = struct {
     deinit: ?*const fn (*anyopaque) void = null,
 };
 
+device: *Device,
 vtable: *const VTable,
 ptr: *anyopaque,
 
