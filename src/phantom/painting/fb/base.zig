@@ -7,7 +7,7 @@ pub const Info = struct {
     format: u32,
 
     pub fn size(self: Info) !usize {
-        const fourcc = try vizops.fourcc.Value.decode(self.format);
+        const fourcc = try vizops.color.fourcc.Value.decode(self.format);
         return fourcc.width() * @reduce(.Mul, self.res.value);
     }
 };

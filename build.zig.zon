@@ -4,12 +4,12 @@
   .paths = .{"."},
   .dependencies = .{
     .vizops = .{
-      .url = "https://github.com/MidstallSoftware/vizops/archive/2c0821b3c3889fa6c6908aeec12e096cbb5bb759.tar.gz",
-      .hash = "122036d678b24998f56aaa3ae191b517164de1a7ed974c880581a335d52c7a2f57c4",
+      .url = "https://github.com/MidstallSoftware/vizops/archive/8046186d8fa1261cd99ffaf69e94380078231cd1.tar.gz",
+      .hash = "12208a38022ce3114365993bd36b24add0141d6e0cd830252f3c1f807d03c06fd828",
     },
     .metaplus = .{
-      .url = "https://github.com/MidstallSoftware/meta-plus/archive/6e27c96293e13d774816df618926aed5e31cd21c.tar.gz",
-      .hash = "12204a76801751523988241376847a5dfd4ce1d06ce7b07666a47d02570327dc3c05",
+      .url = "https://github.com/MidstallSoftware/meta-plus/archive/cadadc017bb2d768c55cc9102ad28441fae902d4.tar.gz",
+      .hash = "12208a02f49d9e18ff7b29a676810ad2f5593743006cd30c2a7d4bf8dc9ae39ce5a5",
     },
     .@"phantom-sdk" = .{
       .url = "https://github.com/PhantomUIx/sdk/archive/57acb613e6948a58885f29981ef88f0b93721f7c.tar.gz",
