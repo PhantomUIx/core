@@ -6,11 +6,10 @@ const Base = @This();
 pub const Info = struct {
     res: vizops.vector.UsizeVector2,
     colorspace: std.meta.DeclEnum(vizops.color.types),
-    format: u32,
+    format: vizops.color.fourcc.Value,
 
     pub fn size(self: Info) !usize {
-        const fourcc = try vizops.color.fourcc.Value.decode(self.format);
-        return fourcc.width() * @reduce(.Mul, self.res.value);
+        return self.format.width() * @reduce(.Mul, self.res.value);
     }
 };
 
@@ -99,9 +98,6 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
         .to => op.info(),
     };
 
-    const src_color = try vizops.color.fourcc.Value.decode(src_info.format);
-    const dest_color = try vizops.color.fourcc.Value.decode(dest_info.format);
-
     const width = @min(src_info.res.value[0], dest_info.res.value[0]);
     const height = @min(src_info.res.value[1], dest_info.res.value[1]);
 
@@ -109,14 +105,14 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
     while (y < height) : (y += 1) {
         var x: usize = 0;
         while (x < width) : (x += 1) {
-            const srci = y * src_color.channelCount() + x;
-            const desti = y * dest_color.channelCount() + x;
+            const srci = y * src_info.format.channelCount() + x;
+            const desti = y * dest_info.format.channelCount() + x;
 
-            const srcbuff = src[srci..src_color.channelCount()];
-            const destbuff = dest[desti..dest_color.channelCount()];
+            const srcbuff = src[srci..src_info.format.channelCount()];
+            const destbuff = dest[desti..dest_info.format.channelCount()];
 
-            const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_color, srcbuff);
-            try vizops.color.writeAnyBuffer(dest_color, destbuff, srcval);
+            const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_info.format, srcbuff);
+            try vizops.color.writeAnyBuffer(dest_info.format, destbuff, srcval);
         }
     }
 }

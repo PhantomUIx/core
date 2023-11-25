@@ -14,16 +14,13 @@ pub const Info = struct {
     scale: vizops.vector.Float32Vector2,
     name: []const u8 = "",
     manufacturer: []const u8 = "",
-    format: u32,
+    format: vizops.color.fourcc.Value,
 
     pub fn format(self: Info, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
 
-        const fourcc: [4]u8 = "    ";
-        std.mem.writeInt(u32, fourcc, self.format, builtin.cpu.arch.endian());
-
-        try writer.print("{s} {{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .format = {s} }}", .{
+        try writer.print("{s} {{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .format = {} }}", .{
             @typeName(Info),
             self.enable,
             self.size.phys.value[0],
@@ -34,7 +31,7 @@ pub const Info = struct {
             self.scale.value[1],
             self.name,
             self.manufacturer,
-            fourcc,
+            self.format,
         });
     }
 };
