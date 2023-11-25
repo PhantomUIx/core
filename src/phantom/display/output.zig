@@ -20,7 +20,7 @@ pub const Info = struct {
         _ = fmt;
         _ = options;
 
-        var fourcc: [4]u8 = "    ";
+        const fourcc: [4]u8 = "    ";
         std.mem.writeInt(u32, fourcc, self.format, builtin.cpu.arch.endian());
 
         try writer.print("{s} {{ .enable = {}, .physicalSize = {}x{}mm, .resolution = {}x{}px, .scale = {}x{}%, .name = \"{s}\", .manufacturer = \"{s}\", .format = {s} }}", .{

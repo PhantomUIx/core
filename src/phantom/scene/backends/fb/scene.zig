@@ -19,6 +19,7 @@ pub fn new(options: Scene.Options) !*FbScene {
             const info = try surf.info();
             break :blk try surf.device.createFrameBuffer(.{
                 .res = info.size,
+                .colorspace = info.colorspace,
                 .format = info.format,
             });
         },

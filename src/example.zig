@@ -58,10 +58,22 @@ pub fn main() !void {
             try scene.createNode(.NodeArc, .{
                 .radius = @as(f32, 32.0),
                 .angles = vizops.vector.Float32Vector2.init([_]f32{ 0, std.math.tau - 0.0001 }),
-                .color = vizops.vector.Float32Vector4.init([_]f32{ 1.0, 0.0, 0.0, 1.0 }),
+                .color = vizops.color.Any{
+                    .float32 = .{
+                        .sRGB = .{
+                            .value = .{ 1.0, 0.0, 0.0, 1.0 },
+                        },
+                    },
+                },
             }),
             try scene.createNode(.NodeRect, .{
-                .color = vizops.vector.Float32Vector4.init([_]f32{ 0.0, 1.0, 0.0, 1.0 }),
+                .color = vizops.color.Any{
+                    .float32 = .{
+                        .sRGB = .{
+                            .value = .{ 0.0, 1.0, 0.0, 1.0 },
+                        },
+                    },
+                },
                 .size = vizops.vector.Float32Vector2.init([_]f32{ 10.0, 10.0 }),
             }),
         },

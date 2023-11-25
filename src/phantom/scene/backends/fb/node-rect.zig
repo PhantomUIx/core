@@ -33,12 +33,12 @@ const Radius = struct {
 pub const Options = struct {
     radius: ?Radius,
     size: vizops.vector.Float32Vector2,
-    color: vizops.vector.Float32Vector4,
+    color: vizops.color.Any,
 };
 
 const State = struct {
     radius: ?Radius,
-    color: vizops.vector.Float32Vector4,
+    color: vizops.color.Any,
 
     pub fn init(alloc: Allocator, options: Options) Allocator.Error!*State {
         const self = try alloc.create(State);
@@ -52,7 +52,7 @@ const State = struct {
     pub fn equal(self: *State, other: *State) bool {
         return std.simd.countTrues(@Vector(2, bool){
             if (self.radius == null and other.radius != null) false else if (self.radius != null and other.radius == null) false else self.radius.?.equal(other.radius.?),
-            std.simd.countTrues(self.color.value == other.color.value) == 4,
+            self.color.equal(other.color),
         }) == 2;
     }
 
@@ -67,10 +67,10 @@ node: Node,
 
 pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     const size: *vizops.vector.Float32Vector2 = @ptrCast(@alignCast(args.get("size") orelse return error.MissingKey));
-    const color: *vizops.vector.Float32Vector4 = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
+    const color: *vizops.color.Any = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .size = vizops.vector.Float32Vector2.init(size.value),
-        .color = vizops.vector.Float32Vector4.init(color.value),
+        .color = color.*,
         .radius = .{
             .top = .{
                 .left = if (args.get("topLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,

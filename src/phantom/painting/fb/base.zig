@@ -1,9 +1,11 @@
+const std = @import("std");
 const vizops = @import("vizops");
 const Blt = @import("../../painting.zig").Blt;
 const Base = @This();
 
 pub const Info = struct {
     res: vizops.vector.UsizeVector2,
+    colorspace: std.meta.DeclEnum(vizops.color.types),
     format: u32,
 
     pub fn size(self: Info) !usize {
@@ -77,16 +79,14 @@ pub inline fn deinit(self: *Base) void {
 pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
     if (self.vtable.blt) |f| return f(self.ptr, mode, op);
 
-    // TODO: we should check infos and ensure they are compatible.
-
     const src: [*]u8 = @ptrCast(@alignCast(switch (mode) {
         .from => try op.addr(),
         .to => try self.addr(),
     }));
 
-    const src_size = switch (mode) {
-        .from => try op.info().size(),
-        .to => try self.info().size(),
+    const src_info = switch (mode) {
+        .from => op.info(),
+        .to => self.info(),
     };
 
     const dest: [*]u8 = @ptrCast(@alignCast(switch (mode) {
@@ -94,10 +94,29 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
         .to => try op.addr(),
     }));
 
-    const dest_size = switch (mode) {
-        .from => try self.info().size(),
-        .to => try op.info().size(),
+    const dest_info = switch (mode) {
+        .from => self.info(),
+        .to => op.info(),
     };
 
-    @memcpy(dest[0..dest_size], src[0..src_size]);
+    const src_color = try vizops.color.fourcc.Value.decode(src_info.format);
+    const dest_color = try vizops.color.fourcc.Value.decode(dest_info.format);
+
+    const width = @min(src_info.res.value[0], dest_info.res.value[0]);
+    const height = @min(src_info.res.value[1], dest_info.res.value[1]);
+
+    var y: usize = 0;
+    while (y < height) : (y += 1) {
+        var x: usize = 0;
+        while (x < width) : (x += 1) {
+            const srci = y * src_color.channelCount() + x;
+            const desti = y * dest_color.channelCount() + x;
+
+            const srcbuff = src[srci..src_color.channelCount()];
+            const destbuff = dest[desti..dest_color.channelCount()];
+
+            const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_color, srcbuff);
+            try vizops.color.writeAnyBuffer(dest_color, destbuff, srcval);
+        }
+    }
 }
