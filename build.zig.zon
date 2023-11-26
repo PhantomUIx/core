@@ -12,8 +12,8 @@
       .hash = "1220ab579379ca9d6281989ad6f5d0cc97bacceaeb274621af3300a2f29e8bee42fd",
     },
     .@"phantom-sdk" = .{
-      .url = "https://github.com/PhantomUIx/sdk/archive/79f4ac3c0e5ef132d311d6965c0d8b137ed7b753.tar.gz",
-      .hash = "1220474f05d0aea424c49e25842c17b76b7c0d33d8d2b5e673e88083651dc0f2f9c3",
+      .url = "https://github.com/PhantomUIx/sdk/archive/12f7adf3d516813ce8cee779e57eadff2e07ab50.tar.gz",
+      .hash = "12203a78985bf61b62862b0a8265cdf862530e8e27148d753e6012f58cddd4cecaba",
     },
   },
 }

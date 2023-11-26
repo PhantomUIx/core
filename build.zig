@@ -35,9 +35,10 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    const sdk = if (no_importer) null else b.dependency("phantom-sdk", .{
+    const sdk = b.dependency("phantom-sdk", .{
         .target = target,
         .optimize = optimize,
+        .no_importer = no_importer,
     });
 
     const phantomOptions = b.addOptions();
@@ -64,7 +65,7 @@ pub fn build(b: *std.Build) void {
     if (!no_importer) {
         phantomDeps.append(.{
             .name = "phantom.imports",
-            .module = sdk.?.module("phantom.imports"),
+            .module = sdk.module("phantom.imports"),
         }) catch @panic("OOM");
     }
 
@@ -86,7 +87,7 @@ pub fn build(b: *std.Build) void {
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
     unit_tests.addModule("phantom.options", phantomOptions.createModule());
-    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.?.module("phantom.imports"));
+    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.module("phantom.imports"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
