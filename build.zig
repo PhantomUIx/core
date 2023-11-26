@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) void {
     const sdk = b.dependency("phantom-sdk", .{
         .target = target,
         .optimize = optimize,
-        .no_importer = no_importer,
+        .@"no-importer" = no_importer,
     });
 
     const phantomOptions = b.addOptions();
