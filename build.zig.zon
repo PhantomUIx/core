@@ -8,12 +8,12 @@
       .hash = "12208e6d1334b77b2ac9351867da74dbce8f8470ea0367ffa1531fcf42e22b631371",
     },
     .metaplus = .{
-      .url = "https://github.com/MidstallSoftware/meta-plus/archive/cadadc017bb2d768c55cc9102ad28441fae902d4.tar.gz",
-      .hash = "12208a02f49d9e18ff7b29a676810ad2f5593743006cd30c2a7d4bf8dc9ae39ce5a5",
+      .url = "https://github.com/MidstallSoftware/meta-plus/archive/015b93feb3851b78f5308d297904467c543cdb93.tar.gz",
+      .hash = "1220ab579379ca9d6281989ad6f5d0cc97bacceaeb274621af3300a2f29e8bee42fd",
     },
     .@"phantom-sdk" = .{
-      .url = "https://github.com/PhantomUIx/sdk/archive/97f273a3f4b316fc0ea83baa089784a028060210.tar.gz",
-      .hash = "12204cdbd92ec25570e31c8ad58acd1a8dade70275b32f4a76e1de96b1292fa39471",
+      .url = "https://github.com/PhantomUIx/sdk/archive/2b4e6441cd7af8b12ac6599adc5a4722f31382f9.tar.gz",
+      .hash = "1220985e8c81836ba60bfd4bb864bbd878588493586e9ce7474f6c1dc601a65129b7",
     },
   },
 }

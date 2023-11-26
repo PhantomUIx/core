@@ -1,8 +1,9 @@
 const std = @import("std");
 const metap = @import("metaplus").@"meta+";
+const Sdk = @import("phantom-sdk");
 
-pub const DisplayBackendType = metap.enums.fromDecls(@import("src/phantom/display/backends.zig"));
-pub const SceneBackendType = metap.enums.fromDecls(@import("src/phantom/scene/backends.zig"));
+pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor("display"));
+pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor("scene"));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
