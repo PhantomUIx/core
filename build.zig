@@ -1,7 +1,7 @@
 const std = @import("std");
 const metap = @import("metaplus").@"meta+";
 
-const Sdk = blk: {
+pub const Sdk = blk: {
     const buildDeps = @import("root").dependencies;
     for (buildDeps.root_deps) |dep| {
         if (std.mem.eql(u8, dep[0], "phantom")) {
@@ -14,6 +14,11 @@ const Sdk = blk: {
         }
     }
 
+    for (buildDeps.root_deps) |dep| {
+        if (std.mem.eql(u8, dep[0], "phantom-sdk")) {
+            break :blk @field(buildDeps.packages, dep[1]).build_zig;
+        }
+    }
     break :blk null;
 };
 
