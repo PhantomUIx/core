@@ -1,6 +1,16 @@
 const std = @import("std");
 const metap = @import("metaplus").@"meta+";
-const Sdk = @import("phantom-sdk");
+
+const Sdk = blk: {
+    const buildDeps = @import("root").dependencies;
+    for (buildDeps.root_deps) |dep| {
+        if (std.mem.eql(u8, dep[0], "phantom-sdk")) {
+            break :blk @field(buildDeps.packages, dep[1]).build_zig;
+        }
+    }
+
+    @compileError("Cannot find Phantom UI SDK");
+};
 
 pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
 pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
@@ -35,10 +45,9 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    const sdk = b.dependency("phantom-sdk", .{
+    const sdk = if (no_importer) null else b.dependency("phantom-sdk", .{
         .target = target,
         .optimize = optimize,
-        .@"no-importer" = no_importer,
     });
 
     const phantomOptions = b.addOptions();
@@ -65,7 +74,7 @@ pub fn build(b: *std.Build) void {
     if (!no_importer) {
         phantomDeps.append(.{
             .name = "phantom.imports",
-            .module = sdk.module("phantom.imports"),
+            .module = sdk.?.module("phantom.imports"),
         }) catch @panic("OOM");
     }
 
@@ -87,7 +96,7 @@ pub fn build(b: *std.Build) void {
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
     unit_tests.addModule("phantom.options", phantomOptions.createModule());
-    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.module("phantom.imports"));
+    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.?.module("phantom.imports"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
