@@ -19,8 +19,17 @@ const Sdk = blk: {
 
 const hasSdk = @typeInfo(@TypeOf(Sdk)) != .Null;
 
-pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), if (!hasSdk) enum {} else Sdk.TypeFor(.displays));
-pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), if (!hasSdk) enum {} else Sdk.TypeFor(.scenes));
+const EmptyEnum = @Type(.{
+    .Enum = .{
+        .tag_type = u0,
+        .fields = &.{},
+        .decls = &.{},
+        .is_exhaustive = true,
+    },
+});
+
+pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), if (!hasSdk) EmptyEnum else Sdk.TypeFor(.displays));
+pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), if (!hasSdk) EmptyEnum else Sdk.TypeFor(.scenes));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
