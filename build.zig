@@ -9,11 +9,13 @@ const Sdk = blk: {
         }
     }
 
-    @compileError("Cannot find Phantom UI SDK");
+    break :blk null;
 };
 
-pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
-pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
+const hasSdk = @typeInfo(@TypeOf(Sdk)) != .Null;
+
+pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), if (!hasSdk) enum {} else Sdk.TypeFor(.displays));
+pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), if (!hasSdk) enum {} else Sdk.TypeFor(.scenes));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
