@@ -1,5 +1,5 @@
 const root = @import("root");
-const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports").import(@This());
+const imports = @import("phantom/importer.zig").imported;
 
 pub const display = @import("phantom/display.zig");
 pub const gpu = @import("phantom/gpu.zig");

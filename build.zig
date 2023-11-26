@@ -2,13 +2,14 @@ const std = @import("std");
 const metap = @import("metaplus").@"meta+";
 const Sdk = @import("phantom-sdk");
 
-pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor("display"));
-pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor("scene"));
+pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
+pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const no_docs = b.option(bool, "no-docs", "skip installing documentation") orelse false;
+    const no_importer = b.option(bool, "no-importer", "disables the import system (not recommended)") orelse false;
     const display_backend = b.option(DisplayBackendType, "display-backend", "The display backend to use for the example") orelse .headless;
     const scene_backend = b.option(SceneBackendType, "scene-backend", "The scene backend to use for the example") orelse .headless;
 
@@ -39,18 +40,37 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const phantom = b.addModule("phantom", .{
-        .source_file = .{ .path = b.pathFromRoot("src/phantom.zig") },
-        .dependencies = &.{ .{
-            .name = "vizops",
-            .module = vizops.module("vizops"),
-        }, .{
-            .name = "meta+",
-            .module = metaplus.module("meta+"),
-        }, .{
+    const phantomOptions = b.addOptions();
+    phantomOptions.addOption(bool, "no_importer", no_importer);
+
+    var phantomDeps = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
+    errdefer phantomDeps.deinit();
+
+    phantomDeps.append(.{
+        .name = "vizops",
+        .module = vizops.module("vizops"),
+    }) catch @panic("OOM");
+
+    phantomDeps.append(.{
+        .name = "meta+",
+        .module = metaplus.module("meta+"),
+    }) catch @panic("OOM");
+
+    phantomDeps.append(.{
+        .name = "phantom.options",
+        .module = phantomOptions.createModule(),
+    }) catch @panic("OOM");
+
+    if (!no_importer) {
+        phantomDeps.append(.{
             .name = "phantom.imports",
             .module = sdk.module("phantom.imports"),
-        } },
+        }) catch @panic("OOM");
+    }
+
+    const phantom = b.addModule("phantom", .{
+        .source_file = .{ .path = b.pathFromRoot("src/phantom.zig") },
+        .dependencies = phantomDeps.items,
     });
 
     const step_test = b.step("test", "Run all unit tests");
@@ -65,7 +85,8 @@ pub fn build(b: *std.Build) void {
 
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
-    unit_tests.addModule("phantom.imports", sdk.module("phantom.imports"));
+    unit_tests.addModule("phantom.options", phantomOptions.createModule());
+    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.module("phantom.imports"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);

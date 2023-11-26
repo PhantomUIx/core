@@ -1,5 +1,5 @@
 const root = @import("root");
-const imports = if (@hasDecl(root, "dependencies")) struct {} else @import("phantom.imports").import(@import("../../phantom.zig"));
+const imports = @import("../importer.zig").imported;
 
 pub const headless = @import("backends/headless.zig");
 
