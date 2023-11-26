@@ -4,8 +4,13 @@ const metap = @import("metaplus").@"meta+";
 const Sdk = blk: {
     const buildDeps = @import("root").dependencies;
     for (buildDeps.root_deps) |dep| {
-        if (std.mem.eql(u8, dep[0], "phantom-sdk")) {
-            break :blk @field(buildDeps.packages, dep[1]).build_zig;
+        if (std.mem.eql(u8, dep[0], "phantom")) {
+            const pkg = @field(buildDeps.packages, dep[1]);
+            for (pkg.deps) |childDeps| {
+                if (std.mem.eql(u8, childDeps[0], "phantom-sdk")) {
+                    break :blk @field(buildDeps.packages, childDeps[1]).build_zig;
+                }
+            }
         }
     }
 
@@ -47,10 +52,19 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    const sdk = if (no_importer) null else b.dependency("phantom-sdk", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    const sdk = blk: {
+        if (no_importer) break :blk null;
+
+        for (b.available_deps) |deps| {
+            if (std.mem.eql(u8, deps[0], "phantom-sdk")) {
+                break :blk b.dependency("phantom-sdk", .{
+                    .target = target,
+                    .optimize = optimize,
+                });
+            }
+        }
+        break :blk null;
+    };
 
     const phantomOptions = b.addOptions();
     phantomOptions.addOption(bool, "no_importer", no_importer);
@@ -73,10 +87,10 @@ pub fn build(b: *std.Build) void {
         .module = phantomOptions.createModule(),
     }) catch @panic("OOM");
 
-    if (!no_importer) {
+    if (sdk) |s| {
         phantomDeps.append(.{
             .name = "phantom.imports",
-            .module = sdk.?.module("phantom.imports"),
+            .module = s.module("phantom.imports"),
         }) catch @panic("OOM");
     }
 
@@ -98,7 +112,7 @@ pub fn build(b: *std.Build) void {
     unit_tests.addModule("vizops", vizops.module("vizops"));
     unit_tests.addModule("meta+", metaplus.module("meta+"));
     unit_tests.addModule("phantom.options", phantomOptions.createModule());
-    if (!no_importer) unit_tests.addModule("phantom.imports", sdk.?.module("phantom.imports"));
+    if (sdk) |s| unit_tests.addModule("phantom.imports", s.module("phantom.imports"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
