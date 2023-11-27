@@ -34,14 +34,13 @@ pub const FrameInfo = struct {
     }
 
     pub fn equal(self: FrameInfo, other: FrameInfo) bool {
-        return std.simd.countTrues(@Vector(6, bool){
+        return std.simd.countTrues(@Vector(5, bool){
             self.size.phys.eq(other.size.phys),
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
             self.colorFormat.eq(other.colorFormat),
-            self.seq == other.seq,
-        }) == 6;
+        }) == 5;
     }
 
     pub fn withSequence(self: FrameInfo, value: u64) FrameInfo {
