@@ -80,17 +80,9 @@ pub fn main() !void {
     });
     defer flex.deinit();
 
-    var flexName = std.ArrayList(u8).init(alloc);
-    defer flexName.deinit();
-
-    try flex.formatName(alloc, flexName.writer());
-
-    std.debug.print("Rendering {s} to the scene\n", .{flexName.items});
-
-    _ = try scene.frame(flex);
-
-    const availSize = scene.frameInfo().size.res.sub(flex.last_state.?.size);
-
-    std.debug.print("Scene has {} horizontal pixels and {} vertical pixels left over\n", .{ availSize.value[0], availSize.value[1] });
-    std.debug.print("{}\n", .{flex});
+    while (true) {
+        const seq = scene.seq;
+        _ = try scene.frame(flex);
+        if (seq != scene.seq) std.debug.print("Frame #{}\n", .{scene.seq});
+    }
 }

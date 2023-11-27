@@ -33,14 +33,14 @@ pub const FrameInfo = struct {
         };
     }
 
-    pub fn equal(self: FrameInfo, other: FrameInfo) bool {
+    pub fn equal(self: FrameInfo, other: FrameInfo, seqCare: bool) bool {
         return std.simd.countTrues(@Vector(6, bool){
             self.size.phys.eq(other.size.phys),
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
             self.colorFormat.eq(other.colorFormat),
-            self.seq == other.seq,
+            if (seqCare) self.seq == other.seq else true,
         }) == 6;
     }
 
@@ -86,12 +86,11 @@ pub const State = struct {
     }
 
     pub fn equal(self: State, other: State) bool {
-        return std.simd.countTrues(@Vector(4, bool){
+        return std.simd.countTrues(@Vector(3, bool){
             self.size.eq(other.size),
-            self.frame_info.equal(other.frame_info),
-            self.ptr == other.ptr,
-            if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else true,
-        }) == 4;
+            self.frame_info.equal(other.frame_info, false),
+            if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else self.ptr == other.ptr,
+        }) == 3;
     }
 };
 
@@ -117,6 +116,8 @@ pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool 
         if (self.last_state) |l| l.deinit(null);
 
         self.last_state = newState;
+    } else {
+        newState.deinit(null);
     }
     return shouldApply;
 }

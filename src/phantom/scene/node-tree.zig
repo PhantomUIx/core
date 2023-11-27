@@ -57,7 +57,7 @@ const State = struct {
     }
 
     pub fn deinit(self: *State) void {
-        for (self.children.items) |s| s.deinit(self.children.allocator);
+        self.children.deinit();
         self.children.allocator.destroy(self);
     }
 };
@@ -106,7 +106,8 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const children = try self.vtable.children(self.ptr, frameInfo);
     defer children.deinit();
 
-    var states = try std.ArrayList(ChildState).initCapacity(children.allocator, children.items.len);
+    var states = std.ArrayList(ChildState).init(children.allocator);
+    errdefer states.deinit();
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
@@ -116,11 +117,12 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
         }
 
         const cstate = try child.node.state(frameInfo.child(childSize));
+        errdefer cstate.deinit(children.allocator);
 
         size.value[0] = @max(size.value[0], child.pos.value[0] + cstate.size.value[0]);
         size.value[1] = @max(size.value[1], child.pos.value[1] + cstate.size.value[1]);
 
-        states.appendAssumeCapacity(.{
+        try states.append(.{
             .state = cstate,
             .pos = child.pos,
         });
@@ -143,7 +145,8 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
     const children = try self.vtable.children(self.ptr, frameInfo);
     defer children.deinit();
 
-    var states = try std.ArrayList(ChildState).initCapacity(children.allocator, children.items.len);
+    var states = std.ArrayList(ChildState).init(children.allocator);
+    errdefer states.deinit();
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
@@ -154,13 +157,14 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
 
         const cframeInfo = frameInfo.child(childSize);
         const cstate = try child.node.state(cframeInfo);
+        errdefer cstate.deinit(children.allocator);
 
         _ = try child.node.preFrame(cframeInfo, @constCast(&scene.sub(child.pos, cstate.size)));
 
         size.value[0] = @max(size.value[0], child.pos.value[0] + cstate.size.value[0]);
         size.value[1] = @max(size.value[1], child.pos.value[1] + cstate.size.value[1]);
 
-        states.appendAssumeCapacity(.{
+        try states.append(.{
             .state = cstate,
             .pos = child.pos,
         });

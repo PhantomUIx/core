@@ -64,11 +64,10 @@ pub inline fn deinit(self: *Scene) void {
 }
 
 pub fn frame(self: *Scene, node: *Node) !bool {
-    self.seq += 1;
-
     if (self.vtable.preFrame) |f| try f(self.ptr, node);
 
     if (try node.preFrame(self.frameInfo(), self)) {
+        self.seq += 1;
         try node.frame(self);
         try node.postFrame(self);
 
