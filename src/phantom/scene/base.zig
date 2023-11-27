@@ -41,6 +41,7 @@ allocator: std.mem.Allocator,
 vtable: *const VTable,
 ptr: *anyopaque,
 subscene: ?Sub = null,
+seq: u64 = 0,
 
 pub fn sub(self: *Scene, pos: vizops.vector.UsizeVector2, size: vizops.vector.UsizeVector2) Scene {
     return .{
@@ -55,7 +56,7 @@ pub fn sub(self: *Scene, pos: vizops.vector.UsizeVector2, size: vizops.vector.Us
 }
 
 pub inline fn frameInfo(self: *Scene) Node.FrameInfo {
-    return self.vtable.frameInfo(self.ptr);
+    return self.vtable.frameInfo(self.ptr).withSequence(self.seq);
 }
 
 pub inline fn deinit(self: *Scene) void {
@@ -63,6 +64,8 @@ pub inline fn deinit(self: *Scene) void {
 }
 
 pub fn frame(self: *Scene, node: *Node) !bool {
+    self.seq += 1;
+
     if (self.vtable.preFrame) |f| try f(self.ptr, node);
 
     if (try node.preFrame(self.frameInfo(), self)) {

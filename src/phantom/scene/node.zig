@@ -12,6 +12,7 @@ pub const FrameInfo = struct {
     },
     scale: vizops.vector.Float32Vector2,
     colorFormat: vizops.color.fourcc.Value,
+    seq: u64 = 0,
 
     pub const Options = struct {
         res: vizops.vector.UsizeVector2,
@@ -33,13 +34,23 @@ pub const FrameInfo = struct {
     }
 
     pub fn equal(self: FrameInfo, other: FrameInfo) bool {
-        return std.simd.countTrues(@Vector(5, bool){
+        return std.simd.countTrues(@Vector(6, bool){
             self.size.phys.eq(other.size.phys),
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
             self.colorFormat.eq(other.colorFormat),
-        }) == 5;
+            self.seq == other.seq,
+        }) == 6;
+    }
+
+    pub fn withSequence(self: FrameInfo, value: u64) FrameInfo {
+        return .{
+            .size = self.size,
+            .scale = self.scale,
+            .colorFormat = self.colorFormat,
+            .seq = value,
+        };
     }
 
     pub fn child(self: FrameInfo, availSize: vizops.vector.UsizeVector2) FrameInfo {
@@ -47,7 +58,7 @@ pub const FrameInfo = struct {
             .phys = self.size.phys,
             .res = self.size.res,
             .avail = availSize,
-        }, .scale = self.scale, .colorFormat = self.colorFormat };
+        }, .scale = self.scale, .colorFormat = self.colorFormat, .seq = self.seq };
     }
 };
 
