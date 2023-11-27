@@ -134,6 +134,6 @@ fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) an
             try self.children.appendSlice(@as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen]);
         } else if (std.mem.eql(u8, key, "direction")) {
             self.direction = @enumFromInt(@intFromPtr(value.?));
-        } else return error.InvalidKey;
+        } else if (std.mem.eql(u8, key, "children.len")) {} else return error.InvalidKey;
     }
 }

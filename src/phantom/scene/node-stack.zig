@@ -119,6 +119,6 @@ fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) an
 
             const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
             try self.children.appendSlice(@as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen]);
-        } else return error.InvalidKey;
+        } else if (std.mem.eql(u8, key, "children.len")) {} else return error.InvalidKey;
     }
 }
