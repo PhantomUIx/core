@@ -33,14 +33,14 @@ pub const FrameInfo = struct {
         };
     }
 
-    pub fn equal(self: FrameInfo, other: FrameInfo, seqCare: bool) bool {
+    pub fn equal(self: FrameInfo, other: FrameInfo) bool {
         return std.simd.countTrues(@Vector(6, bool){
             self.size.phys.eq(other.size.phys),
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
             self.colorFormat.eq(other.colorFormat),
-            if (seqCare) self.seq == other.seq else true,
+            self.seq == other.seq,
         }) == 6;
     }
 
@@ -89,7 +89,7 @@ pub const State = struct {
     pub fn equal(self: State, other: State) bool {
         return std.simd.countTrues(@Vector(3, bool){
             self.size.eq(other.size),
-            self.frame_info.equal(other.frame_info, false),
+            self.frame_info.equal(other.frame_info),
             if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else self.ptr == other.ptr,
         }) == 3;
     }
