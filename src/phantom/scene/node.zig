@@ -11,13 +11,13 @@ pub const FrameInfo = struct {
         avail: vizops.vector.UsizeVector2,
     },
     scale: vizops.vector.Float32Vector2,
-    format: vizops.color.fourcc.Value,
+    colorFormat: vizops.color.fourcc.Value,
 
     pub const Options = struct {
         res: vizops.vector.UsizeVector2,
         scale: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.init(1.0),
         physicalSize: vizops.vector.Float32Vector2 = vizops.vector.Float32Vector2.zero(),
-        format: vizops.color.fourcc.Value,
+        colorFormat: vizops.color.fourcc.Value,
     };
 
     pub fn init(options: Options) FrameInfo {
@@ -28,7 +28,7 @@ pub const FrameInfo = struct {
                 .avail = options.res,
             },
             .scale = options.scale,
-            .format = options.format,
+            .colorFormat = options.colorFormat,
         };
     }
 
@@ -38,7 +38,7 @@ pub const FrameInfo = struct {
             self.size.res.eq(other.size.res),
             self.size.avail.eq(other.size.avail),
             self.scale.eq(other.scale),
-            self.format.eq(other.format),
+            self.colorFormat.eq(other.colorFormat),
         }) == 5;
     }
 
@@ -47,7 +47,7 @@ pub const FrameInfo = struct {
             .phys = self.size.phys,
             .res = self.size.res,
             .avail = availSize,
-        }, .scale = self.scale, .format = self.format };
+        }, .scale = self.scale, .colorFormat = self.colorFormat };
     }
 };
 

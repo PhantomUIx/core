@@ -20,7 +20,7 @@ pub fn new(options: Scene.Options) !*FbScene {
             break :blk try surf.device.createFrameBuffer(.{
                 .res = info.size,
                 .colorspace = info.colorspace,
-                .format = info.format,
+                .colorFormat = info.colorFormat,
             });
         },
         .fb => |fb| try fb.dupe(),

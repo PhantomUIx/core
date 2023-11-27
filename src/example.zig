@@ -26,7 +26,7 @@ pub fn main() !void {
             .scale = vizops.vector.Float32Vector2.init(1.0),
             .name = "display-0",
             .manufacturer = "PhantomUI",
-            .format = try vizops.color.fourcc.Value.decode(vizops.color.fourcc.formats.argb16161616),
+            .colorFormat = try vizops.color.fourcc.Value.decode(vizops.color.fourcc.formats.argb16161616),
         });
     }
 

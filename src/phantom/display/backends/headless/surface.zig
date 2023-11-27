@@ -86,7 +86,7 @@ fn impl_create_scene(ctx: *anyopaque, backendType: SceneModule.BackendType) anye
                 .res = self.info.size,
                 .scale = outputInfo.scale,
                 .physicalSize = outputInfo.size.phys.div(self.info.size.cast(f32)),
-                .format = self.info.format orelse outputInfo.format,
+                .colorFormat = self.info.colorFormat orelse outputInfo.colorFormat,
             }),
             // TODO: determine if we should use the GPU or not
             .target = null,

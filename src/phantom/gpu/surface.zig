@@ -6,7 +6,7 @@ const Device = @import("device.zig");
 const Surface = @This();
 
 pub const Info = struct {
-    format: vizops.color.fourcc.Value,
+    colorFormat: vizops.color.fourcc.Value,
     colorspace: std.meta.DeclEnum(vizops.color.types),
     size: vizops.vector.UsizeVector2,
 };
