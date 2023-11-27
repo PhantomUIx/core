@@ -11,7 +11,7 @@ tree: NodeTree,
 direction: painting.Axis,
 children: std.ArrayList(*Node),
 
-pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
+pub inline fn init(comptime T: type, allocator: Allocator, id: ?usize, ptr: *anyopaque) NodeTree {
     return .{
         .vtable = &.{
             .children = impl_children,
@@ -22,7 +22,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
             .setProperties = impl_set_properties,
         },
         .ptr = ptr,
-        .node = NodeTree.init(T, id orelse @returnAddress(), @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
+        .node = NodeTree.init(T, allocator, id orelse @returnAddress(), @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
     };
 }
 
@@ -41,7 +41,7 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
 pub fn new(alloc: Allocator, id: ?usize, direction: painting.Axis) Allocator.Error!*NodeFlex {
     const self = try alloc.create(NodeFlex);
     self.* = .{
-        .tree = init(NodeFlex, id orelse @returnAddress(), self),
+        .tree = init(NodeFlex, alloc, id orelse @returnAddress(), self),
         .direction = direction,
         .children = std.ArrayList(*Node).init(alloc),
     };
@@ -88,7 +88,7 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Node {
     errdefer self.children.allocator.destroy(d);
 
     d.* = .{
-        .tree = init(NodeFlex, @returnAddress(), d),
+        .tree = init(NodeFlex, self.children.allocator, @returnAddress(), d),
         .direction = self.direction,
         .children = try std.ArrayList(*Node).initCapacity(self.children.allocator, self.children.items.len),
     };

@@ -95,6 +95,7 @@ pub const State = struct {
     }
 };
 
+allocator: std.mem.Allocator,
 vtable: *const VTable,
 ptr: *anyopaque,
 type: []const u8,
@@ -114,11 +115,11 @@ pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool 
     const shouldApply = !(if (self.last_state) |lastState| lastState.equal(newState) else false);
 
     if (shouldApply) {
-        if (self.last_state) |l| l.deinit(null);
+        if (self.last_state) |l| l.deinit(self.allocator);
 
         self.last_state = newState;
     } else {
-        newState.deinit(null);
+        newState.deinit(self.allocator);
     }
     return shouldApply;
 }
@@ -154,8 +155,8 @@ pub fn format(self: *const Node, comptime _: []const u8, options: std.fmt.Format
 }
 
 pub fn formatName(self: *const Node, optAlloc: ?std.mem.Allocator, writer: anytype) !void {
-    if (builtin.mode == .Debug and !builtin.strip_debug_info and optAlloc != null and @hasDecl(std.os.system, "getErrno") and @hasDecl(std.os.system, "fd_t")) {
-        const alloc = optAlloc.?;
+    if (builtin.mode == .Debug and !builtin.strip_debug_info and @hasDecl(std.os.system, "getErrno") and @hasDecl(std.os.system, "fd_t")) {
+        const alloc = optAlloc orelse self.allocator;
         const debug = try std.debug.getSelfDebugInfo();
         const mod = try debug.getModuleForAddress(self.id);
         const sym = try mod.getSymbolAtAddress(alloc, self.id);

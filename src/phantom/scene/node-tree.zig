@@ -67,8 +67,9 @@ node: Node,
 vtable: *const VTable,
 ptr: *anyopaque,
 
-pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) Node {
+pub inline fn init(comptime T: type, allocator: Allocator, id: ?usize, ptr: *anyopaque) Node {
     return .{
+        .allocator = allocator,
         .ptr = ptr,
         .type = @typeName(T),
         .id = id orelse @returnAddress(),

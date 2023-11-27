@@ -61,7 +61,6 @@ const State = struct {
     }
 };
 
-allocator: Allocator,
 options: Options,
 node: Node,
 
@@ -89,9 +88,9 @@ pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node
     errdefer alloc.destroy(self);
 
     self.* = .{
-        .allocator = alloc,
         .options = options,
         .node = .{
+            .allocator = alloc,
             .ptr = self,
             .type = @typeName(NodeRect),
             .id = id orelse @returnAddress(),
@@ -122,7 +121,7 @@ fn stateFree(ctx: *anyopaque, alloc: std.mem.Allocator) void {
 
 fn dupe(ctx: *anyopaque) anyerror!*Node {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
-    return &(try new(self.allocator, @returnAddress(), self.options)).node;
+    return &(try new(self.node.allocator, @returnAddress(), self.options)).node;
 }
 
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
@@ -130,8 +129,8 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     return .{
         .size = math.rel(frameInfo, self.options.size),
         .frame_info = frameInfo,
-        .allocator = self.allocator,
-        .ptr = try State.init(self.allocator, self.options),
+        .allocator = self.node.allocator,
+        .ptr = try State.init(self.node.allocator, self.options),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
     };
@@ -142,8 +141,8 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
     return .{
         .size = math.rel(frameInfo, self.options.size),
         .frame_info = frameInfo,
-        .allocator = self.allocator,
-        .ptr = try State.init(self.allocator, self.options),
+        .allocator = self.node.allocator,
+        .ptr = try State.init(self.node.allocator, self.options),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
     };
@@ -156,13 +155,13 @@ fn frame(ctx: *anyopaque, _: *Scene) anyerror!void {
 
 fn deinit(ctx: *anyopaque) void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
-    self.allocator.destroy(self);
+    self.node.allocator.destroy(self);
 }
 
 fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
 
-    var output = std.ArrayList(u8).init(self.allocator);
+    var output = std.ArrayList(u8).init(self.node.allocator);
     errdefer output.deinit();
 
     try output.writer().print("{{ .size = {}, .color = {}", .{ self.options.size, self.options.color });
