@@ -4,6 +4,7 @@ const vizops = @import("vizops");
 const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
+const FrameBufferScene = @import("scene.zig");
 const NodeRect = @This();
 
 const RadiusSide = struct {
@@ -148,9 +149,29 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
     };
 }
 
-fn frame(ctx: *anyopaque, _: *Scene) anyerror!void {
+fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
-    _ = self;
+    const scene = @fieldParentPtr(FrameBufferScene, "base", baseScene);
+
+    const subscene: Scene.Sub = if (baseScene.subscene) |sub| sub else .{
+        .pos = .{},
+        .size = (try self.node.state(baseScene.frameInfo())).size,
+    };
+
+    const bufferInfo = scene.buffer.info();
+
+    const buffer = try self.allocator.alloc(u8, @divExact(bufferInfo.colorFormat.width(), 8));
+    defer self.allocator.free(buffer);
+    try vizops.color.writeAnyBuffer(bufferInfo.colorFormat, buffer, self.options.color);
+
+    var y: usize = 0;
+    // TODO: handle corners
+    while (y < subscene.size.value[1]) : (y += 1) {
+        var x: usize = 0;
+        while (x < subscene.size.value[0]) : (x += 1) {
+            try scene.buffer.write(y * x, buffer);
+        }
+    }
 }
 
 fn deinit(ctx: *anyopaque) void {

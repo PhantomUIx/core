@@ -108,8 +108,8 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
             const srci = y * src_info.colorFormat.channelCount() + x;
             const desti = y * dest_info.colorFormat.channelCount() + x;
 
-            const srcbuff = src[srci..src_info.colorFormat.channelCount()];
-            const destbuff = dest[desti..dest_info.colorFormat.channelCount()];
+            const srcbuff = src[srci..(srci + src_info.colorFormat.channelCount())];
+            const destbuff = dest[desti..(desti + dest_info.colorFormat.channelCount())];
 
             const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_info.colorFormat, srcbuff);
             try vizops.color.writeAnyBuffer(dest_info.colorFormat, destbuff, srcval);

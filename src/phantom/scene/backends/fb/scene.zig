@@ -79,6 +79,7 @@ fn postFrame(ctx: *anyopaque, _: *Node, didWork: bool) anyerror!void {
 
     if (didWork) {
         try self.buffer.commit();
+        // TODO: figure out a way to know if this is redundant
         return switch (self.target) {
             .surface => |s| s.blt(.from, self.buffer),
             .fb => |f| f.blt(.from, self.buffer),

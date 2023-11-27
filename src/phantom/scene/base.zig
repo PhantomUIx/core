@@ -17,6 +17,11 @@ pub const Target = union(enum) {
     }
 };
 
+pub const Sub = struct {
+    pos: vizops.vector.UsizeVector2,
+    size: vizops.vector.UsizeVector2,
+};
+
 pub const Options = struct {
     allocator: std.mem.Allocator,
     frame_info: Node.FrameInfo,
@@ -35,10 +40,7 @@ pub const VTable = struct {
 allocator: std.mem.Allocator,
 vtable: *const VTable,
 ptr: *anyopaque,
-subscene: ?struct {
-    pos: vizops.vector.UsizeVector2,
-    size: vizops.vector.UsizeVector2,
-} = null,
+subscene: ?Sub = null,
 
 pub fn sub(self: *Scene, pos: vizops.vector.UsizeVector2, size: vizops.vector.UsizeVector2) Scene {
     return .{
