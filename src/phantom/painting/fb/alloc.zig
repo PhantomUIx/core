@@ -4,7 +4,6 @@ const vizops = @import("vizops");
 const Base = @import("base.zig");
 const AllocatedFrameBuffer = @This();
 
-allocator: Allocator,
 base: Base,
 info: Base.Info,
 buffer: []u8,
@@ -16,10 +15,10 @@ pub fn create(alloc: Allocator, info: Base.Info) !*Base {
     errdefer alloc.destroy(self);
 
     self.* = .{
-        .allocator = alloc,
         .info = info,
         .buffer = try alloc.alloc(u8, info.res.value[0] * info.res.value[1] * @divExact(fourcc.width(), 8)),
         .base = .{
+            .allocator = alloc,
             .vtable = &.{
                 .addr = impl_addr,
                 .info = impl_info,
@@ -45,13 +44,13 @@ fn impl_info(ctx: *anyopaque) Base.Info {
 
 fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
     const self: *AllocatedFrameBuffer = @ptrCast(@alignCast(ctx));
-    const d = try self.allocator.create(AllocatedFrameBuffer);
-    errdefer self.allocator.destroy(d);
+    const d = try self.base.allocator.create(AllocatedFrameBuffer);
+    errdefer self.base.allocator.destroy(d);
 
     d.* = .{
-        .allocator = self.allocator,
+        .allocator = self.base.allocator,
         .info = self.info,
-        .buffer = try self.allocator.dupe(u8, self.buffer),
+        .buffer = try self.base.allocator.dupe(u8, self.buffer),
         .base = .{
             .ptr = d,
             .vtable = self.base.vtable,
@@ -62,6 +61,6 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
 
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *AllocatedFrameBuffer = @ptrCast(@alignCast(ctx));
-    self.allocator.free(self.buffer);
-    self.allocator.destroy(self);
+    self.base.allocator.free(self.buffer);
+    self.base.allocator.destroy(self);
 }

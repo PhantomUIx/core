@@ -153,10 +153,8 @@ fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
     const scene: *FrameBufferScene = @ptrCast(@alignCast(baseScene.ptr));
 
-    const subscene: Scene.Sub = if (baseScene.subscene) |sub| sub else .{
-        .pos = .{},
-        .size = (try self.node.state(baseScene.frameInfo())).size,
-    };
+    const size = (try self.node.state(baseScene.frameInfo())).size;
+    const pos: vizops.vector.UsizeVector2 = if (baseScene.subscene) |sub| sub.pos else .{};
 
     const bufferInfo = scene.buffer.info();
 
@@ -164,12 +162,15 @@ fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     defer self.allocator.free(buffer);
     try vizops.color.writeAnyBuffer(bufferInfo.colorFormat, buffer, self.options.color);
 
+    const stride = buffer.len * bufferInfo.res.value[0];
+
     var y: usize = 0;
     // TODO: handle corners
-    while (y < subscene.size.value[1]) : (y += 1) {
+    while (y < size.value[1]) : (y += 1) {
         var x: usize = 0;
-        while (x < subscene.size.value[0]) : (x += 1) {
-            try scene.buffer.write(y * buffer.len + x, buffer);
+        while (x < size.value[0]) : (x += 1) {
+            const i = ((y + pos.value[1]) * stride) + ((x + pos.value[0]) * buffer.len);
+            try scene.buffer.write(i, buffer);
         }
     }
 }
