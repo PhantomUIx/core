@@ -49,18 +49,23 @@ pub inline fn read(self: *Base, i: usize) ![*]const u8 {
     if (self.vtable.read) |f| return f(self.ptr, i);
 
     const inf = self.info();
-    const size = try inf.size();
+    const size = @divExact(inf.colorFormat.width(), 8);
     const ptr: [*]const u8 = @ptrCast(@alignCast(try self.addr()));
-    return ptr[(size * i)..size];
+
+    const start = i * size;
+    const end = start + size;
+    return ptr[start..end];
 }
 
 pub inline fn write(self: *Base, i: usize, val: []const u8) !void {
     if (self.vtable.write) |f| return f(self.ptr, i, val);
 
     const inf = self.info();
-    const size = try inf.size();
+    const size = @divExact(inf.colorFormat.width(), 8);
     const ptr: [*]u8 = @ptrCast(@alignCast(try self.addr()));
-    @memcpy(ptr[(size * i)..val.len], val);
+
+    const start = i * size;
+    for (val, 0..) |v, x| ptr[start + x] = v;
 }
 
 pub inline fn dupe(self: *Base) !*Base {

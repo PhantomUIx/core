@@ -151,7 +151,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
 
 fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
-    const scene = @fieldParentPtr(FrameBufferScene, "base", baseScene);
+    const scene: *FrameBufferScene = @ptrCast(@alignCast(baseScene.ptr));
 
     const subscene: Scene.Sub = if (baseScene.subscene) |sub| sub else .{
         .pos = .{},
