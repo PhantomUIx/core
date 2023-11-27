@@ -17,6 +17,7 @@ pub const VTable = struct {
     dupe: *const fn (*anyopaque) anyerror!*Node,
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?Allocator) anyerror!std.ArrayList(u8) = null,
+    setProperties: ?*const fn (*anyopaque, std.StringHashMap(?*anyopaque)) anyerror!void = null,
 };
 
 const ChildState = struct {
@@ -79,6 +80,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) Node {
             .postFrame = postFrame,
             .deinit = deinit,
             .format = format,
+            .setProperties = setProperties,
         },
     };
 }
@@ -229,4 +231,9 @@ fn format(ctx: *anyopaque, optAlloc: ?Allocator) anyerror!std.ArrayList(u8) {
         return output;
     }
     return error.NoAlloc;
+}
+
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+    const self: *NodeTree = @ptrCast(@alignCast(ctx));
+    return if (self.vtable.setProperties) |f| f(self.ptr, args) else error.NoProperties;
 }

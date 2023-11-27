@@ -71,6 +71,7 @@ pub const VTable = struct {
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?std.mem.Allocator) anyerror!std.ArrayList(u8) = null,
     cast: ?*const fn (*anyopaque, []const u8) error{BadCast}!*anyopaque = null,
+    setProperties: ?*const fn (*anyopaque, std.StringHashMap(?*anyopaque)) anyerror!void = null,
 };
 
 pub const State = struct {
@@ -177,4 +178,31 @@ pub fn formatName(self: *const Node, optAlloc: ?std.mem.Allocator, writer: anyty
 pub fn cast(self: *Node, comptime T: type) error{BadCast}!*T {
     if (self.vtable.cast) |f| return f(self.ptr, @typeName(T));
     return error.BadCast;
+}
+
+pub fn setProperties(self: *Node, args: anytype) !void {
+    if (self.vtable.setProperties) |f| {
+        var argsMap = std.StringHashMap(?*anyopaque).init(self.allocator);
+        defer argsMap.deinit();
+
+        inline for (@typeInfo(@TypeOf(args)).Struct.fields) |fieldInfo| {
+            const field = @field(args, fieldInfo.name);
+            switch (@typeInfo(@TypeOf(field))) {
+                .Int, .ComptimeInt => try argsMap.put(fieldInfo.name, @ptrFromInt(field)),
+                .Float, .ComptimeFloat => try argsMap.put(fieldInfo.name, @ptrFromInt(@as(usize, @bitCast(@as(f64, @floatCast(field)))))),
+                .Enum => try argsMap.put(fieldInfo.name, @ptrFromInt(@intFromEnum(field))),
+                .Struct, .Union => try argsMap.put(fieldInfo.name, @constCast(&field)),
+                .Pointer => |p| switch (@typeInfo(p.child)) {
+                    .Array => {
+                        try argsMap.put(fieldInfo.name ++ ".len", @ptrFromInt(field.len));
+                        try argsMap.put(fieldInfo.name, @ptrCast(@constCast(field.ptr)));
+                    },
+                    else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
+                },
+                else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
+            }
+        }
+        return f(self.ptr, argsMap);
+    }
+    return error.NoProperties;
 }

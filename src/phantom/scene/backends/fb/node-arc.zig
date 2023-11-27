@@ -63,6 +63,7 @@ pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node
                 .frame = frame,
                 .deinit = deinit,
                 .format = format,
+                .setProperties = setProperties,
             },
         },
     };
@@ -165,4 +166,23 @@ fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
 
     try output.writer().print("{{ .radius = {}, .color = {} }}", .{ self.options.radius, self.options.color });
     return output;
+}
+
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+    const self: *NodeArc = @ptrCast(@alignCast(ctx));
+
+    var iter = args.iterator();
+    while (iter.next()) |entry| {
+        const key = entry.key_ptr.*;
+        const value = entry.value_ptr.*;
+        if (value == null) continue;
+
+        if (std.mem.eql(u8, key, "angles")) {
+            self.options.angles.value = @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(value.?))).value;
+        } else if (std.mem.eql(u8, key, "color")) {
+            self.options.color = @as(*vizops.color.Any, @ptrCast(@alignCast(value.?))).*;
+        } else if (std.mem.eql(u8, key, "radius")) {
+            self.options.radius = @floatCast(@as(f64, @bitCast(@intFromPtr(value.?))));
+        } else return error.InvalidKey;
+    }
 }

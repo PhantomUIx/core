@@ -19,6 +19,7 @@ pub inline fn init(comptime T: type, id: ?usize, ptr: *anyopaque) NodeTree {
             .dupe = impl_dupe,
             .deinit = impl_deinit,
             .format = impl_format,
+            .setProperties = impl_set_properties,
         },
         .ptr = ptr,
         .node = NodeTree.init(T, id orelse @returnAddress(), @ptrFromInt(@intFromPtr(ptr) + @offsetOf(NodeFlex, "tree"))),
@@ -115,4 +116,24 @@ fn impl_format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
 
     try output.writer().print("{{ .direction = {?s}, .children = [{}] {any} }}", .{ std.enums.tagName(painting.Axis, self.direction), self.children.items.len, self.children.items });
     return output;
+}
+
+fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+    const self: *NodeFlex = @ptrCast(@alignCast(ctx));
+
+    var iter = args.iterator();
+    while (iter.next()) |entry| {
+        const key = entry.key_ptr.*;
+        const value = entry.value_ptr.*;
+        if (value == null) continue;
+
+        if (std.mem.eql(u8, key, "children")) {
+            while (self.children.popOrNull()) |child| child.deinit();
+
+            const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
+            try self.children.appendSlice(@as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen]);
+        } else if (std.mem.eql(u8, key, "direction")) {
+            self.direction = @enumFromInt(@intFromPtr(value.?));
+        } else return error.InvalidKey;
+    }
 }
