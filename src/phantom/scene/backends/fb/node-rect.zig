@@ -169,7 +169,7 @@ fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     while (y < subscene.size.value[1]) : (y += 1) {
         var x: usize = 0;
         while (x < subscene.size.value[0]) : (x += 1) {
-            try scene.buffer.write(y * x, buffer);
+            try scene.buffer.write(y * buffer.len + x, buffer);
         }
     }
 }

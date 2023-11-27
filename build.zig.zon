@@ -4,8 +4,8 @@
   .paths = .{"."},
   .dependencies = .{
     .vizops = .{
-      .url = "https://github.com/MidstallSoftware/vizops/archive/7a1b49fea05d75cabc920c247eba0274e91bf967.tar.gz",
-      .hash = "12208e6d1334b77b2ac9351867da74dbce8f8470ea0367ffa1531fcf42e22b631371",
+      .url = "https://github.com/MidstallSoftware/vizops/archive/e29a12c162d01a2e53727cab3940a3c029ab2968.tar.gz",
+      .hash = "1220455bbe6f95bea0fe18cf3451ec162d60d93cb54a8a19dfdb4060951da8025116",
     },
     .metaplus = .{
       .url = "https://github.com/MidstallSoftware/meta-plus/archive/015b93feb3851b78f5308d297904467c543cdb93.tar.gz",

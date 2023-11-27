@@ -8,7 +8,7 @@ pub const Info = struct {
     colorspace: std.meta.DeclEnum(vizops.color.types),
     colorFormat: vizops.color.fourcc.Value,
 
-    pub fn size(self: Info) !usize {
+    pub fn size(self: Info) usize {
         return self.colorFormat.width() * @reduce(.Mul, self.res.value);
     }
 };
@@ -18,7 +18,7 @@ pub const VTable = struct {
     unlock: ?*const fn (*anyopaque) void = null,
     addr: *const fn (*anyopaque) anyerror!*anyopaque,
     info: *const fn (*anyopaque) Info,
-    read: ?*const fn (*anyopaque, usize) anyerror![*]const u8 = null,
+    read: ?*const fn (*anyopaque, usize) anyerror![]u8 = null,
     write: ?*const fn (*anyopaque, usize, []const u8) anyerror!void = null,
     dupe: *const fn (*anyopaque) anyerror!*Base,
     commit: ?*const fn (*anyopaque) anyerror!void = null,
@@ -45,27 +45,25 @@ pub inline fn info(self: *Base) Info {
     return self.vtable.info(self.ptr);
 }
 
-pub inline fn read(self: *Base, i: usize) ![*]const u8 {
+pub inline fn read(self: *Base, i: usize) anyerror![]u8 {
     if (self.vtable.read) |f| return f(self.ptr, i);
 
     const inf = self.info();
     const size = @divExact(inf.colorFormat.width(), 8);
-    const ptr: [*]const u8 = @ptrCast(@alignCast(try self.addr()));
+    if ((i + size) >= inf.size() or i < 0) return error.OutOfBounds;
 
-    const start = i * size;
-    const end = start + size;
-    return ptr[start..end];
+    const ptr: [*]u8 = @ptrCast(@alignCast(try self.addr()));
+    return ptr[i..(i + size)];
 }
 
 pub inline fn write(self: *Base, i: usize, val: []const u8) !void {
     if (self.vtable.write) |f| return f(self.ptr, i, val);
 
     const inf = self.info();
-    const size = @divExact(inf.colorFormat.width(), 8);
-    const ptr: [*]u8 = @ptrCast(@alignCast(try self.addr()));
+    if ((i + val.len) >= inf.size() or i < 0) return error.OutOfBounds;
 
-    const start = i * size;
-    for (val, 0..) |v, x| ptr[start + x] = v;
+    const ptr: [*]u8 = @ptrCast(@alignCast(try self.addr()));
+    @memcpy(ptr[i..(i + val.len)], val);
 }
 
 pub inline fn dupe(self: *Base) !*Base {
@@ -83,20 +81,10 @@ pub inline fn deinit(self: *Base) void {
 pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
     if (self.vtable.blt) |f| return f(self.ptr, mode, op);
 
-    const src: [*]u8 = @ptrCast(@alignCast(switch (mode) {
-        .from => try op.addr(),
-        .to => try self.addr(),
-    }));
-
     const src_info = switch (mode) {
         .from => op.info(),
         .to => self.info(),
     };
-
-    const dest: [*]u8 = @ptrCast(@alignCast(switch (mode) {
-        .from => try self.addr(),
-        .to => try op.addr(),
-    }));
 
     const dest_info = switch (mode) {
         .from => self.info(),
@@ -113,11 +101,23 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
             const srci = y * src_info.colorFormat.channelCount() + x;
             const desti = y * dest_info.colorFormat.channelCount() + x;
 
-            const srcbuff = src[srci..(srci + src_info.colorFormat.channelCount())];
-            const destbuff = dest[desti..(desti + dest_info.colorFormat.channelCount())];
+            const srcbuff = try (switch (mode) {
+                .from => op.read(srci),
+                .to => self.read(srci),
+            });
+
+            const destbuff = try (switch (mode) {
+                .from => self.read(desti),
+                .to => op.read(desti),
+            });
 
             const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_info.colorFormat, srcbuff);
             try vizops.color.writeAnyBuffer(dest_info.colorFormat, destbuff, srcval);
+
+            try switch (mode) {
+                .from => self.write(desti, destbuff),
+                .to => op.write(desti, destbuff),
+            };
         }
     }
 }
