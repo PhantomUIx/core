@@ -5,6 +5,7 @@ const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const Fb = @import("../../../painting/fb/base.zig");
+const FrameBufferScene = @import("scene.zig");
 const NodeFrameBuffer = @This();
 
 pub const Options = struct {
@@ -57,6 +58,8 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .source = source,
         .scale = if (args.get("scale")) |v| @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(v))).* else vizops.vector.Float32Vector2.init(1.0),
+        .offset = if (args.get("offset")) |v| @as(*vizops.vector.UsizeVector2, @ptrCast(@alignCast(v))).* else vizops.vector.UsizeVector2.init(0),
+        .blend = if (args.get("blend")) |v| @enumFromInt(@intFromPtr(v)) else .normal,
     })).node;
 }
 
@@ -110,7 +113,7 @@ fn calcSize(self: NodeFrameBuffer, frameInfo: Node.FrameInfo) vizops.vector.Usiz
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
     return .{
-        .size = self.calcSize(),
+        .size = self.calcSize(frameInfo),
         .frame_info = frameInfo,
         .allocator = self.node.allocator,
         .ptr = try State.init(self.node.allocator, self.options),
@@ -123,7 +126,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node.State {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
     return .{
-        .size = self.calcSize(),
+        .size = self.calcSize(frameInfo),
         .frame_info = frameInfo,
         .allocator = self.node.allocator,
         .ptr = try State.init(self.node.allocator, self.options),
@@ -133,9 +136,19 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
     };
 }
 
-fn frame(ctx: *anyopaque, _: *Scene) anyerror!void {
+fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
-    _ = self;
+    const scene: *FrameBufferScene = @ptrCast(@alignCast(baseScene.ptr));
+
+    const size = (try self.node.state(baseScene.frameInfo())).size;
+    const pos: vizops.vector.UsizeVector2 = if (baseScene.subscene) |sub| sub.pos else .{};
+
+    try self.options.source.blt(.from, scene.buffer, .{
+        .sourceOffset = self.options.offset,
+        .destOffset = pos,
+        .size = size,
+        .blend = self.options.blend,
+    });
 }
 
 fn deinit(ctx: *anyopaque) void {
