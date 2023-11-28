@@ -33,9 +33,7 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     if (args.get("children")) |childrenPtr| {
         const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
         const children = @as([*]const *Node, @ptrCast(@alignCast(childrenPtr)))[0..childrenLen];
-        for (children) |child| {
-            try self.children.append(try child.dupe());
-        }
+        try self.children.appendSlice(children);
     }
     return &self.tree.node;
 }
