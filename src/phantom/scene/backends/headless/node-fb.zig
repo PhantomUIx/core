@@ -112,7 +112,7 @@ fn calcSize(self: NodeFrameBuffer, frameInfo: Node.FrameInfo) vizops.vector.Usiz
 fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
     return .{
-        .size = self.calcSize(),
+        .size = self.calcSize(frameInfo),
         .frame_info = frameInfo,
         .allocator = self.node.allocator,
         .ptr = try State.init(self.node.allocator, self.options),
@@ -125,7 +125,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
 fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node.State {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
     return .{
-        .size = self.calcSize(),
+        .size = self.calcSize(frameInfo),
         .frame_info = frameInfo,
         .allocator = self.node.allocator,
         .ptr = try State.init(self.node.allocator, self.options),
