@@ -57,6 +57,8 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .source = source,
         .scale = if (args.get("scale")) |v| @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(v))).* else vizops.vector.Float32Vector2.init(1.0),
+        .offset = if (args.get("offset")) |v| @as(*vizops.vector.UsizeVector2, @ptrCast(@alignCast(v))).* else vizops.vector.UsizeVector2.init(0),
+        .blend = if (args.get("blend")) |v| @enumFromInt(@intFromPtr(v)) else .normal,
     })).node;
 }
 
