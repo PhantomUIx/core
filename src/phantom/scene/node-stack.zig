@@ -91,6 +91,8 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Node {
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *NodeStack = @ptrCast(@alignCast(ctx));
     const alloc = self.children.allocator;
+
+    for (self.children.items) |child| child.deinit();
     self.children.deinit();
     alloc.destroy(self);
 }

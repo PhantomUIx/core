@@ -80,17 +80,20 @@ pub const State = struct {
     allocator: ?std.mem.Allocator = null,
     ptrEqual: ?*const fn (*anyopaque, *anyopaque) bool = null,
     ptrFree: ?*const fn (*anyopaque, std.mem.Allocator) void = null,
+    type: []const u8,
 
     pub inline fn deinit(self: State, alloc: ?std.mem.Allocator) void {
         return if (self.ptrFree) |f| f(self.ptr.?, (self.allocator orelse alloc).?);
     }
 
     pub fn equal(self: State, other: State) bool {
-        return std.simd.countTrues(@Vector(3, bool){
+        const typeMatch = std.mem.eql(u8, self.type, other.type);
+        return std.simd.countTrues(@Vector(4, bool){
             self.size.eq(other.size),
             self.frame_info.equal(other.frame_info),
-            if (self.ptrEqual) |f| f(self.ptr.?, self.ptr.?) else self.ptr == other.ptr,
-        }) == 3;
+            if (typeMatch) if (self.ptrEqual) |f| f(self.ptr.?, other.ptr.?) else self.ptr == other.ptr else false,
+            typeMatch,
+        }) == 4;
     }
 };
 
@@ -106,7 +109,7 @@ pub inline fn dupe(self: *Node) anyerror!*Node {
 }
 
 pub inline fn state(self: *Node, frameInfo: FrameInfo) anyerror!State {
-    return if (self.last_state) |s| s else self.vtable.state(self.ptr, frameInfo);
+    return self.vtable.state(self.ptr, frameInfo);
 }
 
 pub fn preFrame(self: *Node, frameInfo: FrameInfo, scene: *Scene) anyerror!bool {
@@ -132,7 +135,7 @@ pub inline fn postFrame(self: *Node, scene: *Scene) anyerror!void {
 }
 
 pub inline fn deinit(self: *Node) void {
-    if (self.last_state) |l| l.deinit(null);
+    if (self.last_state) |l| l.deinit(self.allocator);
     if (self.vtable.deinit) |f| f(self.ptr);
 }
 

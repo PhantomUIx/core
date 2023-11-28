@@ -133,6 +133,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
         .ptr = try State.init(self.node.allocator, self.options),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
+        .type = @typeName(NodeRect),
     };
 }
 
@@ -145,6 +146,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, _: *Scene) anyerror!Node
         .ptr = try State.init(self.node.allocator, self.options),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
+        .type = @typeName(NodeRect),
     };
 }
 

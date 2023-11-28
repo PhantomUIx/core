@@ -33,7 +33,9 @@ pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
     if (args.get("children")) |childrenPtr| {
         const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
         const children = @as([*]const *Node, @ptrCast(@alignCast(childrenPtr)))[0..childrenLen];
-        try self.children.appendSlice(children);
+        for (children) |child| {
+            try self.children.append(try child.dupe());
+        }
     }
     return &self.tree.node;
 }
@@ -57,6 +59,7 @@ fn impl_children(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!std.ArrayL
 
     for (self.children.items) |child| {
         const cstate = try child.state(frameInfo);
+        defer cstate.deinit(self.children.allocator);
 
         v.appendAssumeCapacity(.{
             .node = child,
@@ -104,6 +107,8 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Node {
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *NodeFlex = @ptrCast(@alignCast(ctx));
     const alloc = self.children.allocator;
+
+    for (self.children.items) |child| child.deinit();
     self.children.deinit();
     alloc.destroy(self);
 }
@@ -131,7 +136,10 @@ fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) an
             while (self.children.popOrNull()) |child| child.deinit();
 
             const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
-            try self.children.appendSlice(@as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen]);
+            const children = @as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen];
+            for (children) |child| {
+                try self.children.append(try child.dupe());
+            }
         } else if (std.mem.eql(u8, key, "direction")) {
             self.direction = @enumFromInt(@intFromPtr(value.?));
         } else if (std.mem.eql(u8, key, "children.len")) {} else return error.InvalidKey;

@@ -41,8 +41,9 @@ const State = struct {
 
     pub fn init(children: std.ArrayList(ChildState)) Allocator.Error!*State {
         const self = try children.allocator.create(State);
+
         self.* = .{
-            .children = children,
+            .children = try children.clone(),
         };
         return self;
     }
@@ -58,6 +59,7 @@ const State = struct {
     }
 
     pub fn deinit(self: *State) void {
+        for (self.children.items) |child| child.deinit(self.children.allocator);
         self.children.deinit();
         self.children.allocator.destroy(self);
     }
@@ -110,7 +112,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
     defer children.deinit();
 
     var states = std.ArrayList(ChildState).init(children.allocator);
-    errdefer states.deinit();
+    defer states.deinit();
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
@@ -138,6 +140,7 @@ fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {
         .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
+        .type = @typeName(NodeTree),
     };
 }
 
@@ -149,7 +152,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
     defer children.deinit();
 
     var states = std.ArrayList(ChildState).init(children.allocator);
-    errdefer states.deinit();
+    defer states.deinit();
 
     for (children.items) |child| {
         const childSize = frameInfo.size.avail.sub(size);
@@ -180,6 +183,7 @@ fn preFrame(ctx: *anyopaque, frameInfo: Node.FrameInfo, scene: *Scene) anyerror!
         .ptr = try State.init(states),
         .ptrEqual = stateEqual,
         .ptrFree = stateFree,
+        .type = @typeName(NodeTree),
     };
 }
 
