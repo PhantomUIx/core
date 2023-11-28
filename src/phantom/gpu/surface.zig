@@ -14,7 +14,7 @@ pub const Info = struct {
 pub const VTable = struct {
     info: *const fn (*anyopaque) anyerror!Info,
     updateInfo: *const fn (*anyopaque, Info) anyerror!void,
-    blt: *const fn (*anyopaque, Blt, *fb.Base) anyerror!void,
+    blt: *const fn (*anyopaque, Blt, *fb.Base, vizops.vector.UsizeVector2) anyerror!void,
     dupe: *const fn (*anyopaque) anyerror!*Surface,
     deinit: ?*const fn (*anyopaque) void = null,
 };
@@ -31,8 +31,8 @@ pub inline fn updateInfo(self: *Surface, i: Info) !void {
     return self.vtable.updateInfo(self.ptr, i);
 }
 
-pub inline fn blt(self: *Surface, mode: Blt, op: *fb.Base) !void {
-    return self.vtable.blt(self.ptr, mode, op);
+pub inline fn blt(self: *Surface, mode: Blt, op: *fb.Base, offset: vizops.vector.UsizeVector2) !void {
+    return self.vtable.blt(self.ptr, mode, op, offset);
 }
 
 pub inline fn dupe(self: *Surface) !*Surface {

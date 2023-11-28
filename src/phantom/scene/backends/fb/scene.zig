@@ -87,8 +87,8 @@ fn postFrame(ctx: *anyopaque, _: *Node, didWork: bool) anyerror!void {
         }
 
         return switch (self.target) {
-            .surface => |s| s.blt(.from, self.buffer),
-            .fb => |f| f.blt(.from, self.buffer),
+            .surface => |s| s.blt(.from, self.buffer, .{}),
+            .fb => |f| f.blt(.from, self.buffer, .{}),
         };
     }
 }

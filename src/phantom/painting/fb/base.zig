@@ -1,6 +1,8 @@
 const std = @import("std");
 const vizops = @import("vizops");
-const Blt = @import("../../painting.zig").Blt;
+const painting = @import("../../painting.zig");
+const Blt = painting.Blt;
+const BltOptions = painting.BltOptions;
 const Base = @This();
 
 pub const Info = struct {
@@ -23,7 +25,7 @@ pub const VTable = struct {
     dupe: *const fn (*anyopaque) anyerror!*Base,
     commit: ?*const fn (*anyopaque) anyerror!void = null,
     deinit: ?*const fn (*anyopaque) void = null,
-    blt: ?*const fn (*anyopaque, Blt, *Base) anyerror!void,
+    blt: ?*const fn (*anyopaque, Blt, *Base, BltOptions) anyerror!void,
 };
 
 allocator: std.mem.Allocator,
@@ -74,8 +76,8 @@ pub inline fn deinit(self: *Base) void {
     if (self.vtable.deinit) |f| f(self.ptr);
 }
 
-pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
-    if (self.vtable.blt) |f| return f(self.ptr, mode, op);
+pub inline fn blt(self: *Base, mode: Blt, op: *Base, options: BltOptions) !void {
+    if (self.vtable.blt) |f| return f(self.ptr, mode, op, options);
 
     const src_info = switch (mode) {
         .from => op.info(),
@@ -87,11 +89,14 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
         .to => op.info(),
     };
 
-    const width = @min(src_info.res.value[0], dest_info.res.value[0]);
-    const height = @min(src_info.res.value[1], dest_info.res.value[1]);
+    const width = if (options.size) |s| s.value[0] else @min(src_info.res.value[0], dest_info.res.value[0]);
+    const height = if (options.size) |s| s.value[1] else @min(src_info.res.value[1], dest_info.res.value[1]);
 
     const srcbuff = try self.allocator.alloc(u8, @divExact(src_info.colorFormat.width(), 8));
     defer self.allocator.free(srcbuff);
+
+    const origbuff = try self.allocator.alloc(u8, @divExact(dest_info.colorFormat.width(), 8));
+    defer self.allocator.free(origbuff);
 
     const destbuff = try self.allocator.alloc(u8, @divExact(dest_info.colorFormat.width(), 8));
     defer self.allocator.free(destbuff);
@@ -103,15 +108,26 @@ pub inline fn blt(self: *Base, mode: Blt, op: *Base) !void {
     while (y < height) : (y += 1) {
         var x: usize = 0;
         while (x < width) : (x += 1) {
-            const srci = y * srcStride + x * srcbuff.len;
-            const desti = y * destStride + x * destbuff.len;
+            const srci = (y + options.sourceOffset.value[1]) * srcStride + (x + options.sourceOffset.value[0]) * srcbuff.len;
+            const desti = (y + options.destOffset.value[1]) * destStride + (x + options.destOffset.value[0]) * destbuff.len;
 
             try switch (mode) {
                 .from => op.read(srci, srcbuff),
                 .to => self.read(srci, srcbuff),
             };
 
-            const srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_info.colorFormat, srcbuff);
+            var srcval = try vizops.color.readAnyBuffer(src_info.colorspace, src_info.colorFormat, srcbuff);
+
+            if (options.blend != .normal) {
+                try switch (mode) {
+                    .from => self.read(srci, origbuff),
+                    .to => op.read(srci, origbuff),
+                };
+
+                const origval = try vizops.color.readAnyBuffer(dest_info.colorspace, dest_info.colorFormat, origbuff);
+                srcval = try vizops.color.blendAny(srcval, origval, options.blend);
+            }
+
             try vizops.color.writeAnyBuffer(dest_info.colorFormat, destbuff, srcval);
 
             try switch (mode) {
