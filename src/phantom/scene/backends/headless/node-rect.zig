@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
@@ -64,20 +65,20 @@ const State = struct {
 options: Options,
 node: Node,
 
-pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
-    const size: *vizops.vector.Float32Vector2 = @ptrCast(@alignCast(args.get("size") orelse return error.MissingKey));
-    const color: *vizops.color.Any = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
+pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
+    const size = try (args.get("size") orelse return error.MissingKey).cast(vizops.vector.Float32Vector2);
+    const color = try (args.get("color") orelse return error.MissingKey).cast(vizops.color.Any);
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .size = vizops.vector.Float32Vector2.init(size.value),
-        .color = color.*,
+        .color = color,
         .radius = .{
             .top = .{
-                .left = if (args.get("topLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
-                .right = if (args.get("topRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
+                .left = if (args.get("topLeft")) |v| try v.cast(f32) else null,
+                .right = if (args.get("topRight")) |v| try v.cast(f32) else null,
             },
             .bottom = .{
-                .left = if (args.get("bottomLeft")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
-                .right = if (args.get("bottomRight")) |v| @floatCast(@as(f64, @bitCast(@intFromPtr(v)))) else null,
+                .left = if (args.get("bottomLeft")) |v| try v.cast(f32) else null,
+                .right = if (args.get("bottomRight")) |v| try v.cast(f32) else null,
             },
         },
     })).node;
@@ -183,19 +184,17 @@ fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     return output;
 }
 
-fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)) anyerror!void {
     const self: *NodeRect = @ptrCast(@alignCast(ctx));
 
     var iter = args.iterator();
     while (iter.next()) |entry| {
         const key = entry.key_ptr.*;
-        const value = entry.value_ptr.*;
-        if (value == null) continue;
 
         if (std.mem.eql(u8, key, "size")) {
-            self.options.size.value = @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(value.?))).value;
+            self.options.size = try entry.value_ptr.cast(vizops.vector.Float32Vector2);
         } else if (std.mem.eql(u8, key, "color")) {
-            self.options.color = @as(*vizops.color.Any, @ptrCast(@alignCast(value.?))).*;
+            self.options.color = try entry.value_ptr.cast(vizops.color.Any);
         } else return error.InvalidKey;
     }
 }

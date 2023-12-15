@@ -1,5 +1,6 @@
 const std = @import("std");
 const metaplus = @import("meta+");
+const anyplus = @import("any+");
 
 const base = struct {
     pub const Node = @import("scene/node.zig");
@@ -32,7 +33,7 @@ pub fn createBackend(t: BackendType, options: Base.Options) !*Base {
     return error.InvalidBackend;
 }
 
-pub fn createNode(t: BackendType, typeName: []const u8, id: ?usize, args: std.StringHashMap(?*anyopaque)) !*base.Node {
+pub fn createNode(t: BackendType, typeName: []const u8, id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*base.Node {
     const tag = std.enums.tagName(BackendType, t) orelse return error.InvalidBackend;
     inline for (@typeInfo(backends).Struct.decls) |decl| {
         if (std.mem.eql(u8, decl.name, tag)) {

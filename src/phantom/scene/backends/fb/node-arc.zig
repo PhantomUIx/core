@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
@@ -35,14 +36,14 @@ const State = struct {
 options: Options,
 node: Node,
 
-pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
-    const radius: f32 = @floatCast(@as(f64, @bitCast(@intFromPtr(args.get("radius") orelse return error.MissingKey))));
-    const angles: *vizops.vector.Float32Vector2 = @ptrCast(@alignCast(args.get("angles") orelse return error.MissingKey));
-    const color: *vizops.color.Any = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
+pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
+    const radius = try (args.get("radius") orelse return error.MissingKey).cast(f32);
+    const angles = try (args.get("angles") orelse return error.MissingKey).cast(vizops.vector.Float32Vector2);
+    const color = try (args.get("color") orelse return error.MissingKey).cast(vizops.color.Any);
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .radius = radius,
         .angles = vizops.vector.Float32Vector2.init(angles.value),
-        .color = color.*,
+        .color = color,
     })).node;
 }
 
@@ -169,21 +170,19 @@ fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     return output;
 }
 
-fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)) anyerror!void {
     const self: *NodeArc = @ptrCast(@alignCast(ctx));
 
     var iter = args.iterator();
     while (iter.next()) |entry| {
         const key = entry.key_ptr.*;
-        const value = entry.value_ptr.*;
-        if (value == null) continue;
 
         if (std.mem.eql(u8, key, "angles")) {
-            self.options.angles.value = @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(value.?))).value;
+            self.options.angles = try entry.value_ptr.cast(vizops.vector.Float32Vector2);
         } else if (std.mem.eql(u8, key, "color")) {
-            self.options.color = @as(*vizops.color.Any, @ptrCast(@alignCast(value.?))).*;
+            self.options.color = try entry.value_ptr.cast(vizops.color.Any);
         } else if (std.mem.eql(u8, key, "radius")) {
-            self.options.radius = @floatCast(@as(f64, @bitCast(@intFromPtr(value.?))));
+            self.options.radius = try entry.value_ptr.cast(f32);
         } else return error.InvalidKey;
     }
 }

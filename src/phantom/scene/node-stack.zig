@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const painting = @import("../painting.zig");
 const Scene = @import("base.zig");
@@ -25,13 +26,11 @@ pub inline fn init(comptime T: type, allocator: Allocator, id: ?usize, ptr: *any
     };
 }
 
-pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
+pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
     var self = try new(args.allocator, id orelse @returnAddress());
 
-    if (args.get("children")) |childrenPtr| {
-        const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
-        const children = @as([*]const *Node, @ptrCast(@alignCast(childrenPtr)))[0..childrenLen];
-        try self.children.appendSlice(children);
+    if (args.get("children")) |children| {
+        try self.children.appendSlice((try children.cast(*const []*Node)).*);
     }
     return &self.tree.node;
 }
@@ -107,23 +106,20 @@ fn impl_format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     return output;
 }
 
-fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)) anyerror!void {
     const self: *NodeStack = @ptrCast(@alignCast(ctx));
 
     var iter = args.iterator();
     while (iter.next()) |entry| {
         const key = entry.key_ptr.*;
-        const value = entry.value_ptr.*;
-        if (value == null) continue;
 
         if (std.mem.eql(u8, key, "children")) {
+            const value = try entry.value_ptr.cast(*const []*Node);
             while (self.children.popOrNull()) |child| child.deinit();
 
-            const childrenLen = @intFromPtr(args.get("children.len") orelse return error.MissingKey);
-            const children = @as([*]const *Node, @ptrCast(@alignCast(value.?)))[0..childrenLen];
-            for (children) |child| {
+            for (value.*) |child| {
                 try self.children.append(try child.dupe());
             }
-        } else if (std.mem.eql(u8, key, "children.len")) {} else return error.InvalidKey;
+        } else return error.InvalidKey;
     }
 }

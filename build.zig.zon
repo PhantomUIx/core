@@ -11,6 +11,10 @@
       .url = "https://github.com/MidstallSoftware/meta-plus/archive/015b93feb3851b78f5308d297904467c543cdb93.tar.gz",
       .hash = "1220ab579379ca9d6281989ad6f5d0cc97bacceaeb274621af3300a2f29e8bee42fd",
     },
+    .@"any+" = .{
+      .url = "https://github.com/MidstallSoftware/any-plus/archive/36049e14fd3cb34f70ca7ec8ea5b164294616111.tar.gz",
+      .hash = "1220855ef72edfd94a4c7b1ae27556756be162853487e6e111b90ad1e84a32f85d87",
+    },
     .@"phantom-sdk" = .{
       .url = "https://github.com/PhantomUIx/sdk/archive/cc26dbd8bca73c44fcdbd5a062b0621ecbb6d2a3.tar.gz",
       .hash = "1220bfb69c483d94ea6300d81974466590b907b38722d08614eceff8c1956c7c9411",

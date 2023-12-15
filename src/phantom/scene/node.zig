@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const Scene = @import("base.zig");
 const Node = @This();
@@ -70,7 +71,7 @@ pub const VTable = struct {
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?std.mem.Allocator) anyerror!std.ArrayList(u8) = null,
     cast: ?*const fn (*anyopaque, []const u8) error{BadCast}!*anyopaque = null,
-    setProperties: ?*const fn (*anyopaque, std.StringHashMap(?*anyopaque)) anyerror!void = null,
+    setProperties: ?*const fn (*anyopaque, std.StringHashMap(anyplus.Anytype)) anyerror!void = null,
 };
 
 pub const State = struct {
@@ -141,17 +142,16 @@ pub inline fn deinit(self: *Node) void {
 
 pub fn format(self: *const Node, comptime _: []const u8, options: std.fmt.FormatOptions, writer: anytype) @TypeOf(writer).Error!void {
     _ = options;
-    const FallbackError = @field(@TypeOf(writer).Error, @typeInfo(@TypeOf(writer).Error).ErrorSet.?[0].name);
 
     if (self.vtable.format) |fmt| {
-        const output = fmt(self.ptr, if (self.last_state) |s| s.allocator else null) catch return FallbackError;
+        const output = fmt(self.ptr, if (self.last_state) |s| s.allocator else null) catch return error.OutOfMemory;
         defer output.deinit();
 
-        self.formatName(output.allocator, writer) catch return FallbackError;
+        self.formatName(output.allocator, writer) catch return error.OutOfMemory;
         try writer.writeByte(' ');
         try writer.writeAll(output.items);
     } else {
-        self.formatName(if (self.last_state) |s| s.allocator else null, writer) catch return FallbackError;
+        self.formatName(if (self.last_state) |s| s.allocator else null, writer) catch return error.OutOfMemory;
         try writer.print(" {{ .last_state = {?} }}", .{self.last_state});
     }
 }
@@ -185,25 +185,12 @@ pub fn cast(self: *Node, comptime T: type) error{BadCast}!*T {
 
 pub fn setProperties(self: *Node, args: anytype) !void {
     if (self.vtable.setProperties) |f| {
-        var argsMap = std.StringHashMap(?*anyopaque).init(self.allocator);
+        var argsMap = std.StringHashMap(anyplus.Anytype).init(self.allocator);
         defer argsMap.deinit();
 
         inline for (@typeInfo(@TypeOf(args)).Struct.fields) |fieldInfo| {
             const field = @field(args, fieldInfo.name);
-            switch (@typeInfo(@TypeOf(field))) {
-                .Int, .ComptimeInt => try argsMap.put(fieldInfo.name, @ptrFromInt(field)),
-                .Float, .ComptimeFloat => try argsMap.put(fieldInfo.name, @ptrFromInt(@as(usize, @bitCast(@as(f64, @floatCast(field)))))),
-                .Enum => try argsMap.put(fieldInfo.name, @ptrFromInt(@intFromEnum(field))),
-                .Struct, .Union => try argsMap.put(fieldInfo.name, @constCast(&field)),
-                .Pointer => |p| switch (@typeInfo(p.child)) {
-                    .Array => {
-                        try argsMap.put(fieldInfo.name ++ ".len", @ptrFromInt(field.len));
-                        try argsMap.put(fieldInfo.name, @ptrCast(@constCast(field.ptr)));
-                    },
-                    else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
-                },
-                else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
-            }
+            try argsMap.put(fieldInfo.name, anyplus.Anytype.init(field));
         }
         return f(self.ptr, argsMap);
     }

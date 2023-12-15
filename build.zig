@@ -49,21 +49,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    _ = b.addModule("vizops", .{
-        .source_file = .{
-            .path = vizops.builder.pathFromRoot(vizops.module("vizops").source_file.path),
-        },
-    });
-
     const metaplus = b.dependency("metaplus", .{
         .target = target,
         .optimize = optimize,
     });
 
-    _ = b.addModule("meta+", .{
-        .source_file = .{
-            .path = metaplus.builder.pathFromRoot(metaplus.module("meta+").source_file.path),
-        },
+    const anyplus = b.dependency("any+", .{
+        .target = target,
+        .optimize = optimize,
     });
 
     const sdk = blk: {
@@ -94,6 +87,11 @@ pub fn build(b: *std.Build) void {
     phantomDeps.append(.{
         .name = "meta+",
         .module = metaplus.module("meta+"),
+    }) catch @panic("OOM");
+
+    phantomDeps.append(.{
+        .name = "any+",
+        .module = anyplus.module("any+"),
     }) catch @panic("OOM");
 
     phantomDeps.append(.{

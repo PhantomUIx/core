@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const Scene = @import("../../base.zig");
 const Node = @import("../../node.zig");
 const Fb = @import("../../../painting/fb/base.zig");
@@ -63,7 +64,7 @@ fn deinit(ctx: *anyopaque) void {
     self.base.allocator.destroy(self);
 }
 
-fn createNode(ctx: *anyopaque, typeName: []const u8, id: usize, args: std.StringHashMap(?*anyopaque)) anyerror!*Node {
+fn createNode(ctx: *anyopaque, typeName: []const u8, id: usize, args: std.StringHashMap(anyplus.Anytype)) anyerror!*Node {
     _ = ctx;
     return @import("../../../scene.zig").createNode(.fb, typeName, id, args);
 }

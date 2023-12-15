@@ -1,4 +1,5 @@
 const std = @import("std");
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const GpuSurface = @import("../gpu/surface.zig");
 const fb = @import("../painting/fb.zig");
@@ -32,7 +33,7 @@ pub const VTable = struct {
     sub: ?*const fn (*anyopaque, vizops.vector.UsizeVector2, vizops.vector.UsizeVector2) *anyopaque,
     frameInfo: *const fn (*anyopaque) Node.FrameInfo,
     deinit: ?*const fn (*anyopaque) void = null,
-    createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(?*anyopaque)) anyerror!*Node,
+    createNode: *const fn (*anyopaque, []const u8, usize, std.StringHashMap(anyplus.Anytype)) anyerror!*Node,
     preFrame: ?*const fn (*anyopaque, *Node) anyerror!void = null,
     postFrame: ?*const fn (*anyopaque, *Node, bool) anyerror!void = null,
 };
@@ -80,25 +81,12 @@ pub fn frame(self: *Scene, node: *Node) !bool {
 }
 
 pub fn createNode(self: *Scene, T: anytype, args: anytype) !*Node {
-    var argsMap = std.StringHashMap(?*anyopaque).init(self.allocator);
+    var argsMap = std.StringHashMap(anyplus.Anytype).init(self.allocator);
     defer argsMap.deinit();
 
     inline for (@typeInfo(@TypeOf(args)).Struct.fields) |fieldInfo| {
         const field = @field(args, fieldInfo.name);
-        switch (@typeInfo(@TypeOf(field))) {
-            .Int, .ComptimeInt => try argsMap.put(fieldInfo.name, @ptrFromInt(field)),
-            .Float, .ComptimeFloat => try argsMap.put(fieldInfo.name, @ptrFromInt(@as(usize, @bitCast(@as(f64, @floatCast(field)))))),
-            .Enum => try argsMap.put(fieldInfo.name, @ptrFromInt(@intFromEnum(field))),
-            .Struct, .Union => try argsMap.put(fieldInfo.name, @constCast(&field)),
-            .Pointer => |p| switch (@typeInfo(p.child)) {
-                .Array => {
-                    try argsMap.put(fieldInfo.name ++ ".len", @ptrFromInt(field.len));
-                    try argsMap.put(fieldInfo.name, @ptrCast(@constCast(field.ptr)));
-                },
-                else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
-            },
-            else => @compileError("Unsupported type: " ++ @typeName(@TypeOf(field))),
-        }
+        try argsMap.put(fieldInfo.name, anyplus.Anytype.init(field));
     }
 
     return self.vtable.createNode(self.ptr, @tagName(T), @returnAddress(), argsMap);

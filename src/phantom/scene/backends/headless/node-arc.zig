@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
@@ -35,14 +36,14 @@ const State = struct {
 options: Options,
 node: Node,
 
-pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
-    const radius: f32 = @floatCast(@as(f64, @bitCast(@intFromPtr(args.get("radius") orelse return error.MissingKey))));
-    const angles: *vizops.vector.Float32Vector2 = @ptrCast(@alignCast(args.get("angles") orelse return error.MissingKey));
-    const color: *vizops.color.Any = @ptrCast(@alignCast(args.get("color") orelse return error.MissingKey));
+pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
+    const radius = try (args.get("radius") orelse return error.MissingKey).cast(f32);
+    const angles = try (args.get("angles") orelse return error.MissingKey).cast(vizops.vector.Float32Vector2);
+    const color = try (args.get("color") orelse return error.MissingKey).cast(vizops.color.Any);
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .radius = radius,
-        .angles = vizops.vector.Float32Vector2.init(angles.value),
-        .color = color.*,
+        .angles = angles,
+        .color = color,
     })).node;
 }
 

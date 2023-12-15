@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../../math.zig");
 const Scene = @import("../../base.zig");
@@ -52,13 +53,13 @@ const State = struct {
 options: Options,
 node: Node,
 
-pub fn create(id: ?usize, args: std.StringHashMap(?*anyopaque)) !*Node {
-    const source: *Fb = @ptrCast(@alignCast(args.get("source") orelse return error.MissingKey));
+pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
+    const source = try (args.get("source") orelse return error.MissingKey).cast(*Fb);
     return &(try new(args.allocator, id orelse @returnAddress(), .{
         .source = source,
-        .scale = if (args.get("scale")) |v| @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(v))).* else vizops.vector.Float32Vector2.init(1.0),
-        .offset = if (args.get("offset")) |v| @as(*vizops.vector.UsizeVector2, @ptrCast(@alignCast(v))).* else vizops.vector.UsizeVector2.init(0),
-        .blend = if (args.get("blend")) |v| @enumFromInt(@intFromPtr(v)) else .normal,
+        .scale = if (args.get("scale")) |v| try v.cast(vizops.vector.Float32Vector2) else vizops.vector.Float32Vector2.init(1.0),
+        .offset = if (args.get("offset")) |v| try v.cast(vizops.vector.UsizeVector2) else vizops.vector.UsizeVector2.init(0),
+        .blend = if (args.get("blend")) |v| try v.cast(vizops.color.BlendMode) else .normal,
     })).node;
 }
 
@@ -156,20 +157,18 @@ fn format(ctx: *anyopaque, _: ?Allocator) anyerror!std.ArrayList(u8) {
     return output;
 }
 
-fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)) anyerror!void {
     const self: *NodeFrameBuffer = @ptrCast(@alignCast(ctx));
 
     var iter = args.iterator();
     while (iter.next()) |entry| {
         const key = entry.key_ptr.*;
-        const value = entry.value_ptr.*;
-        if (value == null) continue;
 
         if (std.mem.eql(u8, key, "scale")) {
-            self.options.scale.value = @as(*vizops.vector.Float32Vector2, @ptrCast(@alignCast(value.?))).value;
+            self.options.scale = try entry.value_ptr.cast(vizops.vector.Float32Vector2);
         } else if (std.mem.eql(u8, key, "source")) {
             self.options.source.deinit();
-            self.options.source = try @as(*Fb, @ptrCast(@alignCast(value.?))).dupe();
+            self.options.source = try (try entry.value_ptr.cast(*Fb)).dupe();
         } else return error.InvalidKey;
     }
 }

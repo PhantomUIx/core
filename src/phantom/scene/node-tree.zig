@@ -1,5 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../math.zig");
 const Scene = @import("base.zig");
@@ -17,7 +18,7 @@ pub const VTable = struct {
     dupe: *const fn (*anyopaque) anyerror!*Node,
     deinit: ?*const fn (*anyopaque) void = null,
     format: ?*const fn (*anyopaque, ?Allocator) anyerror!std.ArrayList(u8) = null,
-    setProperties: ?*const fn (*anyopaque, std.StringHashMap(?*anyopaque)) anyerror!void = null,
+    setProperties: ?*const fn (*anyopaque, std.StringHashMap(anyplus.Anytype)) anyerror!void = null,
 };
 
 const ChildState = struct {
@@ -238,7 +239,7 @@ fn format(ctx: *anyopaque, optAlloc: ?Allocator) anyerror!std.ArrayList(u8) {
     return error.NoAlloc;
 }
 
-fn setProperties(ctx: *anyopaque, args: std.StringHashMap(?*anyopaque)) anyerror!void {
+fn setProperties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)) anyerror!void {
     const self: *NodeTree = @ptrCast(@alignCast(ctx));
     return if (self.vtable.setProperties) |f| f(self.ptr, args) else error.NoProperties;
 }
