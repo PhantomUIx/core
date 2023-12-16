@@ -32,7 +32,7 @@ pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
     var self = try new(args.allocator, id orelse @returnAddress(), direction);
 
     if (args.get("children")) |children| {
-        try self.children.appendSlice((try children.cast(*const []*Node)).*);
+        try self.children.appendSlice(try children.cast([]*Node));
     }
     return &self.tree.node;
 }
@@ -128,10 +128,10 @@ fn impl_set_properties(ctx: *anyopaque, args: std.StringHashMap(anyplus.Anytype)
         const key = entry.key_ptr.*;
 
         if (std.mem.eql(u8, key, "children")) {
-            const value = try entry.value_ptr.cast(*const []*Node);
+            const value = try entry.value_ptr.cast([]*Node);
             while (self.children.popOrNull()) |child| child.deinit();
 
-            for (value.*) |child| {
+            for (value) |child| {
                 try self.children.append(try child.dupe());
             }
         } else if (std.mem.eql(u8, key, "direction")) {
