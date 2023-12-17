@@ -77,8 +77,15 @@ pub fn build(b: *std.Build) !void {
                 if (entry.kind == .directory) continue;
 
                 const entryPath = b.pathJoin(&.{ depSourceRootPath, entry.path });
-                const entrySource = try Sdk.readAll(b.allocator, entryPath);
+                var entrySource = try Sdk.readAll(b.allocator, entryPath);
                 errdefer b.allocator.free(entrySource);
+
+                const entrypointRel = try std.fs.path.relative(b.allocator, std.fs.path.dirname(entryPath).?, b.pathJoin(&.{ pkg.build_root, "src/phantom.zig" }));
+                defer b.allocator.free(entrypointRel);
+
+                const entrySourceOrig = entrySource;
+                entrySource = try std.mem.replaceOwned(u8, b.allocator, entrySourceOrig, "@import(\"phantom\")", b.fmt("@import(\"{s}\")", .{entrypointRel}));
+                b.allocator.free(entrySourceOrig);
 
                 if (fileOverrides.getPtr(entry.path)) |sourceptr| {
                     const fullSource = try Sdk.updateSource(b.allocator, sourceptr.*, entrySource);
@@ -97,7 +104,7 @@ pub fn build(b: *std.Build) !void {
                         try fileOverrides.put(try b.allocator.dupe(u8, entry.path), fullSource);
                         b.allocator.free(entrySource);
                     } else {
-                        _ = phantomSource.addCopyFile(.{ .path = entryPath }, b.pathJoin(&.{ "phantom", entry.path }));
+                        _ = phantomSource.add(b.pathJoin(&.{ "phantom", entry.path }), entrySource);
                     }
                 }
             }
