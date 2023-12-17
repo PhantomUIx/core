@@ -94,12 +94,10 @@ pub fn build(b: *std.Build) !void {
                         const fullSource = try Sdk.updateSource(b.allocator, origSource, entrySource);
                         errdefer b.allocator.free(fullSource);
 
-                        try fileOverrides.putNoClobber(entry.path, fullSource);
+                        try fileOverrides.put(try b.allocator.dupe(u8, entry.path), fullSource);
                         b.allocator.free(entrySource);
                     } else {
-                        _ = phantomSource.addCopyFile(.{
-                            .path = entryPath
-                        }, b.pathJoin(&.{ "phantom", entry.path }));
+                        _ = phantomSource.addCopyFile(.{ .path = entryPath }, b.pathJoin(&.{ "phantom", entry.path }));
                     }
                 }
             }
