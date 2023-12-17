@@ -119,5 +119,14 @@ pub fn readAll(alloc: std.mem.Allocator, path: []const u8) ![]const u8 {
 }
 
 pub fn updateSource(alloc: std.mem.Allocator, a: []const u8, b: []const u8) ![]const u8 {
-    return if (std.mem.eql(u8, a, b)) try alloc.dupe(u8, a) else try std.mem.concat(alloc, u8, &.{ a, b });
+    var lines = std.ArrayList(u8).init(alloc);
+    errdefer lines.deinit();
+    try lines.appendSlice(a);
+
+    var bIter = std.mem.splitAny(alloc, u8, b, "\n");
+    while (bIter.next()) |bline| {
+        _ = std.mem.indexOf(u8, a, bline) orelse continue;
+        try lines.append(bline);
+    }
+    return lines.items;
 }
