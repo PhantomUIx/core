@@ -117,3 +117,7 @@ pub fn readAll(alloc: std.mem.Allocator, path: []const u8) ![]const u8 {
     defer file.close();
     return try file.readToEndAlloc(alloc, (try file.metadata()).size());
 }
+
+pub fn updateSource(alloc: std.mem.Allocator, a: []const u8, b: []const u8) []const u8 {
+    return if (std.mem.eql(u8, a, b)) try alloc.dupe(u8, a) else try std.mem.concat(alloc, u8, &.{ a, b });
+}

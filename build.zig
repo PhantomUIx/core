@@ -60,14 +60,8 @@ pub fn build(b: *std.Build) !void {
     var fileOverrides = std.StringHashMap([]const u8).init(b.allocator);
     defer fileOverrides.deinit();
 
-    var rootSource = std.ArrayList(u8).init(b.allocator);
-    defer rootSource.deinit();
-
-    {
-        const src = try Sdk.readAll(b.allocator, b.pathFromRoot("src/phantom.zig"));
-        defer b.allocator.free(src);
-        try rootSource.appendSlice(src);
-    }
+    var rootSource = try Sdk.readAll(b.allocator, b.pathFromRoot("src/phantom.zig"));
+    defer b.allocator.free(rootSource);
 
     if (!no_importer) {
         inline for (Sdk.availableDepenencies) |dep| {
@@ -87,26 +81,35 @@ pub fn build(b: *std.Build) !void {
                 errdefer b.allocator.free(entrySource);
 
                 if (fileOverrides.getPtr(entry.path)) |sourceptr| {
-                    const fullSource = try std.mem.concat(b.allocator, u8, &.{ sourceptr.*, entrySource });
+                    const fullSource = try Sdk.updateSource(b.allocator, sourceptr.*, entrySource);
                     errdefer b.allocator.free(fullSource);
 
                     b.allocator.free(sourceptr.*);
                     sourceptr.* = fullSource;
                 } else {
                     const origPath = b.pathFromRoot(b.pathJoin(&.{ "src/phantom", entry.path }));
-                    const origSource = try Sdk.readAll(b.allocator, origPath);
-                    defer b.allocator.free(origSource);
+                    if (Sdk.readAll(b.allocator, origPath) catch null) |origSource| {
+                        defer b.allocator.free(origSource);
 
-                    const fullSource = try std.mem.concat(b.allocator, u8, &.{ origSource, entrySource });
-                    errdefer b.allocator.free(fullSource);
+                        const fullSource = try Sdk.updateSource(b.allocator, origSource, entrySource);
+                        errdefer b.allocator.free(fullSource);
 
-                    try fileOverrides.put(entry.path, fullSource);
+                        try fileOverrides.put(entry.path, fullSource);
+                        b.allocator.free(entrySource);
+                    } else {
+                        try fileOverrides.put(entry.path, entrySource);
+                    }
                 }
             }
 
             const src = try Sdk.readAll(b.allocator, b.pathJoin(&.{ pkg.build_root, "src/phantom.zig" }));
             defer b.allocator.free(src);
-            try rootSource.appendSlice(src);
+
+            const fullSource = try Sdk.updateSource(b.allocator, rootSource, src);
+            errdefer b.allocator.free(fullSource);
+
+            b.allocator.free(rootSource);
+            rootSource = fullSource;
         }
     }
 
@@ -131,7 +134,7 @@ pub fn build(b: *std.Build) !void {
     }
 
     const phantom = b.addModule("phantom", .{
-        .source_file = phantomSource.add("phantom.zig", rootSource.items),
+        .source_file = phantomSource.add("phantom.zig", rootSource),
         .dependencies = phantomDeps.items,
     });
 
