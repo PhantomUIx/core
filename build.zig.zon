@@ -15,9 +15,5 @@
       .url = "https://github.com/MidstallSoftware/any-plus/archive/621a844c14fe957c414f236938cc501549b7d00f.tar.gz",
       .hash = "12203a657043fd4ec04003e048a0c4cbbe27aedc02415379c7c629e022e5b284d23a",
     },
-    .@"phantom-sdk" = .{
-      .url = "https://github.com/PhantomUIx/sdk/archive/cc26dbd8bca73c44fcdbd5a062b0621ecbb6d2a3.tar.gz",
-      .hash = "1220bfb69c483d94ea6300d81974466590b907b38722d08614eceff8c1956c7c9411",
-    },
   },
 }
