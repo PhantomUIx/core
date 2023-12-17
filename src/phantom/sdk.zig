@@ -123,10 +123,10 @@ pub fn updateSource(alloc: std.mem.Allocator, a: []const u8, b: []const u8) ![]c
     errdefer lines.deinit();
     try lines.appendSlice(a);
 
-    var bIter = std.mem.splitAny(alloc, u8, b, "\n");
+    var bIter = std.mem.splitAny(u8, b, "\n");
     while (bIter.next()) |bline| {
-        _ = std.mem.indexOf(u8, a, bline) orelse continue;
-        try lines.append(bline);
+        if (std.mem.indexOf(u8, a, bline) != null) continue;
+        try lines.appendSlice(bline);
     }
     return lines.items;
 }
