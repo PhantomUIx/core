@@ -5,6 +5,7 @@ pub const Sdk = @import("src/phantom/sdk.zig");
 
 pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
 pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
+pub const ImageFormatType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/painting/image/formats.zig")), Sdk.TypeFor(.imageFormats));
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
