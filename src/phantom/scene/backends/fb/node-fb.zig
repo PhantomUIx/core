@@ -144,7 +144,7 @@ fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
     const size = (try self.node.state(baseScene.frameInfo())).size;
     const pos: vizops.vector.UsizeVector2 = if (baseScene.subscene) |sub| sub.pos else .{};
 
-    try self.options.source.blt(.from, scene.buffer, .{
+    try self.options.source.blt(.to, scene.buffer, .{
         .sourceOffset = self.options.offset,
         .destOffset = pos,
         .size = size,
