@@ -55,7 +55,7 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
             .vtable = self.base.vtable,
         },
     };
-    return d;
+    return &d.base;
 }
 
 fn impl_deinit(ctx: *anyopaque) void {
