@@ -9,7 +9,7 @@ info: Base.Info,
 buffer: []u8,
 
 pub fn create(alloc: Allocator, info: Base.Info) !*Base {
-    const fourcc = try vizops.color.fourcc.Value.decode(info.format);
+    const fourcc = try vizops.color.fourcc.Value.decode(info.colorFormat);
 
     const self = try alloc.create(AllocatedFrameBuffer);
     errdefer alloc.destroy(self);
