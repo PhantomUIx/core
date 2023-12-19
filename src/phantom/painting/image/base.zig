@@ -19,8 +19,8 @@ pub const VTable = struct {
 ptr: *anyopaque,
 vtable: *const VTable,
 
-pub inline fn buffer(self: Self) !*Fb {
-    return self.vtable.buffer(self.ptr);
+pub inline fn buffer(self: Self, i: usize) !*Fb {
+    return self.vtable.buffer(self.ptr, i);
 }
 
 pub inline fn info(self: Self) Info {
