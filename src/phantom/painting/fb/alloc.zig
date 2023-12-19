@@ -9,14 +9,12 @@ info: Base.Info,
 buffer: []u8,
 
 pub fn create(alloc: Allocator, info: Base.Info) !*Base {
-    const fourcc = try vizops.color.fourcc.Value.decode(info.colorFormat);
-
     const self = try alloc.create(AllocatedFrameBuffer);
     errdefer alloc.destroy(self);
 
     self.* = .{
         .info = info,
-        .buffer = try alloc.alloc(u8, info.res.value[0] * info.res.value[1] * @divExact(fourcc.width(), 8)),
+        .buffer = try alloc.alloc(u8, info.res.value[0] * info.res.value[1] * @divExact(info.colorFormat.width(), 8)),
         .base = .{
             .allocator = alloc,
             .vtable = &.{
