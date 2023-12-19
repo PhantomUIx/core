@@ -126,7 +126,7 @@ pub fn build(b: *std.Build) !void {
                     }
                 }
 
-                if (!alreadyExists) {
+                if (!alreadyExists or !std.mem.eql(u8, entry.key_ptr.*, "phantom")) {
                     try phantomDeps.append(.{
                         .name = entry.key_ptr.*,
                         .module = entry.value_ptr.*,
