@@ -22,6 +22,7 @@ pub fn create(alloc: Allocator, info: Base.Info) !*Base {
                 .info = impl_info,
                 .dupe = impl_dupe,
                 .deinit = impl_deinit,
+                .blt = null,
             },
             .ptr = self,
         },
@@ -32,7 +33,7 @@ pub fn create(alloc: Allocator, info: Base.Info) !*Base {
 
 fn impl_addr(ctx: *anyopaque) anyerror!*anyopaque {
     const self: *AllocatedFrameBuffer = @ptrCast(@alignCast(ctx));
-    return self.buffer;
+    return @ptrCast(@alignCast(self.buffer));
 }
 
 fn impl_info(ctx: *anyopaque) Base.Info {
@@ -46,11 +47,11 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
     errdefer self.base.allocator.destroy(d);
 
     d.* = .{
-        .allocator = self.base.allocator,
         .info = self.info,
         .buffer = try self.base.allocator.dupe(u8, self.buffer),
         .base = .{
             .ptr = d,
+            .allocator = self.base.allocator,
             .vtable = self.base.vtable,
         },
     };
