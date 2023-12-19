@@ -67,6 +67,12 @@ pub fn build(b: *std.Build) !void {
     if (!no_importer) {
         inline for (Sdk.availableDepenencies) |dep| {
             const pkg = @field(@import("root").dependencies.packages, dep[1]);
+            const pkgdep = b.dependencyInner(dep[0], pkg.build_root, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, pkg.deps, .{
+                .target = target,
+                .optimize = optimize,
+                .@"no-importer" = true,
+            });
+
             const depSourceRootPath = b.pathJoin(&.{ pkg.build_root, "src/phantom" });
             var depSourceRoot = try std.fs.openDirAbsolute(depSourceRootPath, .{ .iterate = true });
             defer depSourceRoot.close();
@@ -107,6 +113,24 @@ pub fn build(b: *std.Build) !void {
                     } else {
                         _ = phantomSource.add(b.pathJoin(&.{ "phantom", entry.path }), entrySource);
                     }
+                }
+            }
+
+            var iter = pkgdep.module(dep[0]).dependencies.iterator();
+            while (iter.next()) |entry| {
+                var alreadyExists = false;
+                for (phantomDeps.items) |i| {
+                    if (std.mem.eql(u8, i.name, entry.key_ptr.*)) {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyExists) {
+                    try phantomDeps.append(.{
+                        .name = entry.key_ptr.*,
+                        .module = entry.value_ptr.*,
+                    });
                 }
             }
 
