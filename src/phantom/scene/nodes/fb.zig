@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const anyplus = @import("anyplus");
+const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../math.zig");
 const Scene = @import("../base.zig");
