@@ -16,3 +16,4 @@ pub const BltOptions = struct {
 
 pub const fb = @import("painting/fb.zig");
 pub const image = @import("painting/image.zig");
+pub const Canvas = @import("painting/canvas.zig");

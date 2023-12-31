@@ -6,32 +6,8 @@ const math = @import("../../math.zig");
 const Node = @import("../node.zig");
 const Scene = @import("../base.zig");
 
-pub const RadiusSide = struct {
-    left: ?f32 = null,
-    right: ?f32 = null,
-
-    pub fn equal(self: RadiusSide, other: RadiusSide) bool {
-        return std.simd.countTrues(@Vector(2, bool){
-            self.left == other.left,
-            self.right == other.right,
-        }) == 2;
-    }
-};
-
-pub const Radius = struct {
-    top: ?RadiusSide = null,
-    bottom: ?RadiusSide = null,
-
-    pub fn equal(self: Radius, other: Radius) bool {
-        return std.simd.countTrues(@Vector(2, bool){
-            if (self.top == null and other.top != null) false else if (self.top != null and other.top == null) false else self.top.?.equal(other.top.?),
-            if (self.bottom == null and other.bottom != null) false else if (self.bottom != null and other.bottom == null) false else self.bottom.?.equal(other.bottom.?),
-        }) == 2;
-    }
-};
-
 pub const Options = struct {
-    radius: ?Radius = null,
+    radius: ?f32 = 0.0,
     size: vizops.vector.Float32Vector2,
     color: vizops.color.Any,
 };
@@ -43,7 +19,7 @@ pub fn NodeRect(comptime Impl: type) type {
         const ImplScene = Impl.Scene;
 
         pub const State = struct {
-            radius: ?Radius,
+            radius: ?f32,
             color: vizops.color.Any,
             implState: ImplState,
 
@@ -59,7 +35,7 @@ pub fn NodeRect(comptime Impl: type) type {
 
             pub fn equal(self: *State, other: *State) bool {
                 return std.simd.countTrues(@Vector(3, bool){
-                    if (self.radius == null and other.radius != null) false else if (self.radius != null and other.radius == null) false else self.radius.?.equal(other.radius.?),
+                    if (self.radius == null and other.radius != null) false else if (self.radius != null and other.radius == null) false else self.radius.? == other.radius.?,
                     self.color.equal(other.color),
                     if (ImplState != void) self.implState.equal(other.implState) else true,
                 }) == 3;
@@ -176,14 +152,7 @@ pub fn NodeRect(comptime Impl: type) type {
             try output.writer().print("{{ .size = {}, .color = {}", .{ self.options.size, self.options.color });
 
             if (self.options.radius) |r| {
-                if (r.top) |t| {
-                    if (t.left) |v| try output.writer().print(", .topLeft = {}", .{v});
-                    if (t.right) |v| try output.writer().print(", .topRight = {}", .{v});
-                }
-                if (r.top) |b| {
-                    if (b.left) |v| try output.writer().print(", .bottomLeft = {}", .{v});
-                    if (b.right) |v| try output.writer().print(", .bottomRight = {}", .{v});
-                }
+                try output.writer().print(", .radius = {}", .{r});
             }
 
             try output.writer().writeAll(" }");
