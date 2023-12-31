@@ -8,6 +8,11 @@ const Node = @import("node.zig");
 const NodeTree = @import("node-tree.zig");
 const NodeFlex = @This();
 
+pub const Options = struct {
+    direction: painting.Axis,
+    children: ?[]const *Node = null,
+};
+
 tree: NodeTree,
 direction: painting.Axis,
 children: std.ArrayList(*Node),
@@ -27,24 +32,18 @@ pub inline fn init(comptime T: type, allocator: Allocator, id: ?usize, ptr: *any
     };
 }
 
-pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
-    const direction = try (args.get("direction") orelse return error.MissingKey).cast(painting.Axis);
-    var self = try new(args.allocator, id orelse @returnAddress(), direction);
-
-    if (args.get("children")) |children| {
-        try self.children.appendSlice(try children.cast([]*Node));
-    }
-    return &self.tree.node;
-}
-
-pub fn new(alloc: Allocator, id: ?usize, direction: painting.Axis) Allocator.Error!*NodeFlex {
+pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node {
     const self = try alloc.create(NodeFlex);
     self.* = .{
         .tree = init(NodeFlex, alloc, id orelse @returnAddress(), self),
-        .direction = direction,
+        .direction = options.direction,
         .children = std.ArrayList(*Node).init(alloc),
     };
-    return self;
+
+    if (options.children) |children| {
+        try self.children.appendSlice(children);
+    }
+    return &self.tree.node;
 }
 
 fn impl_children(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!std.ArrayList(NodeTree.Child) {

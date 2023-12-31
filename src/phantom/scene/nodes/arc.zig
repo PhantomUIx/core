@@ -1,6 +1,5 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../math.zig");
 const Scene = @import("../base.zig");
@@ -48,18 +47,7 @@ pub fn NodeArc(comptime Impl: type) type {
         node: Node,
         impl: Impl,
 
-        pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
-            const radius = try (args.get("radius") orelse return error.MissingKey).cast(f32);
-            const angles = try (args.get("angles") orelse return error.MissingKey).cast(vizops.vector.Float32Vector2);
-            const color = try (args.get("color") orelse return error.MissingKey).cast(vizops.color.Any);
-            return &(try new(args.allocator, id orelse @returnAddress(), .{
-                .radius = radius,
-                .angles = angles,
-                .color = color,
-            })).node;
-        }
-
-        pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Self {
+        pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node {
             const self = try alloc.create(Self);
             self.* = .{
                 .options = options,
@@ -83,7 +71,7 @@ pub fn NodeArc(comptime Impl: type) type {
             if (@hasDecl(Impl, "new")) {
                 try Impl.init(self);
             }
-            return self;
+            return &self.node;
         }
 
         fn stateEqual(ctx: *anyopaque, otherctx: *anyopaque) bool {
@@ -137,7 +125,7 @@ pub fn NodeArc(comptime Impl: type) type {
 
         fn dupe(ctx: *anyopaque) anyerror!*Node {
             const self: *Self = @ptrCast(@alignCast(ctx));
-            return &(try new(self.node.allocator, @returnAddress(), self.options)).node;
+            return try new(self.node.allocator, @returnAddress(), self.options);
         }
 
         fn state(ctx: *anyopaque, frameInfo: Node.FrameInfo) anyerror!Node.State {

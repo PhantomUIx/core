@@ -8,8 +8,8 @@
       .hash = "1220f478cda5edf75a0b837e04c741631e4136e422b4257ccbd09d4cccaf736ac312",
     },
     .metaplus = .{
-      .url = "https://github.com/MidstallSoftware/meta-plus/archive/015b93feb3851b78f5308d297904467c543cdb93.tar.gz",
-      .hash = "1220ab579379ca9d6281989ad6f5d0cc97bacceaeb274621af3300a2f29e8bee42fd",
+      .url = "https://github.com/MidstallSoftware/meta-plus/archive/2ee7b6eea70dfdf52d88c378e603e2b886fdd5c3.tar.gz",
+      .hash = "12206db0349ec554a40f23e657bbcc197bc32bf2c4f94990daa3fb11a4eab165be6e",
     },
     .@"any+" = .{
       .url = "https://github.com/MidstallSoftware/any-plus/archive/621a844c14fe957c414f236938cc501549b7d00f.tar.gz",

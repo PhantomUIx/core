@@ -40,11 +40,11 @@ pub fn new(options: Scene.Options) !*FbScene {
                 .sub = null,
                 .frameInfo = frameInfo,
                 .deinit = deinit,
-                .createNode = createNode,
                 .preFrame = preFrame,
                 .postFrame = postFrame,
             },
             .subscene = null,
+            .type = .fb,
         },
         .buffer = buffer,
         .target = target,
@@ -62,11 +62,6 @@ fn deinit(ctx: *anyopaque) void {
     self.buffer.deinit();
     self.target.deinit();
     self.base.allocator.destroy(self);
-}
-
-fn createNode(ctx: *anyopaque, typeName: []const u8, id: usize, args: std.StringHashMap(anyplus.Anytype)) anyerror!*Node {
-    _ = ctx;
-    return @import("../../../scene.zig").createNode(.fb, typeName, id, args);
 }
 
 fn preFrame(ctx: *anyopaque, _: *Node) anyerror!void {
