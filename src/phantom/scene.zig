@@ -12,6 +12,7 @@ const base = struct {
 pub const Base = @import("scene/base.zig");
 pub usingnamespace base;
 
+pub const nodes = @import("scene/nodes.zig");
 pub const backends = @import("scene/backends.zig");
 pub const BackendType = metaplus.enums.fromDecls(backends);
 
