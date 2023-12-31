@@ -53,12 +53,12 @@ pub fn main() !void {
     const scene = try surface.createScene(sceneBackendType);
 
     const flex = try scene.createNode(.NodeFlex, .{
-        .direction = phantom.painting.Axis.horizontal,
-        .children = [_]*phantom.scene.Node{
+        .direction = .horizontal,
+        .children = &.{
             try scene.createNode(.NodeArc, .{
-                .radius = @as(f32, 32.0),
+                .radius = 32.0,
                 .angles = vizops.vector.Float32Vector2.init([_]f32{ 0, std.math.tau - 0.0001 }),
-                .color = vizops.color.Any{
+                .color = .{
                     .float32 = .{
                         .sRGB = .{
                             .value = .{ 1.0, 0.0, 0.0, 1.0 },
@@ -67,7 +67,7 @@ pub fn main() !void {
                 },
             }),
             try scene.createNode(.NodeRect, .{
-                .color = vizops.color.Any{
+                .color = .{
                     .float32 = .{
                         .sRGB = .{
                             .value = .{ 0.0, 1.0, 0.0, 1.0 },

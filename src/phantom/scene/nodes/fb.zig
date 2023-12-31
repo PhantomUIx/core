@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const anyplus = @import("any+");
+const anyplus = @import("anyplus");
 const vizops = @import("vizops");
 const math = @import("../../math.zig");
 const Scene = @import("../base.zig");
@@ -63,17 +63,7 @@ pub fn NodeFb(comptime Impl: type) type {
         node: Node,
         impl: Impl,
 
-        pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
-            const source = try (args.get("source") orelse return error.MissingKey).cast(*Fb);
-            return &(try new(args.allocator, id orelse @returnAddress(), .{
-                .source = source,
-                .scale = if (args.get("scale")) |v| try v.cast(vizops.vector.Float32Vector2) else vizops.vector.Float32Vector2.init(1.0),
-                .offset = if (args.get("offset")) |v| try v.cast(vizops.vector.UsizeVector2) else vizops.vector.UsizeVector2.init(0),
-                .blend = if (args.get("blend")) |v| try v.cast(vizops.color.BlendMode) else .normal,
-            })).node;
-        }
-
-        pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Self {
+        pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node {
             const self = try alloc.create(Self);
             errdefer alloc.destroy(self);
 
@@ -100,7 +90,7 @@ pub fn NodeFb(comptime Impl: type) type {
             if (@hasDecl(Impl, "new")) {
                 try Impl.init(self);
             }
-            return self;
+            return &self.node;
         }
 
         fn stateEqual(ctx: *anyopaque, otherctx: *anyopaque) bool {
@@ -116,7 +106,7 @@ pub fn NodeFb(comptime Impl: type) type {
 
         fn dupe(ctx: *anyopaque) anyerror!*Node {
             const self: *Self = @ptrCast(@alignCast(ctx));
-            return &(try new(self.node.allocator, @returnAddress(), self.options)).node;
+            return try new(self.node.allocator, @returnAddress(), self.options);
         }
 
         fn calcSize(self: Self, frameInfo: Node.FrameInfo) vizops.vector.UsizeVector2 {

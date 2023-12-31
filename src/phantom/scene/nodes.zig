@@ -1,3 +1,3 @@
-pub const arc = @import("nodes/arc.zig");
-pub const fb = @import("nodes/fb.zig");
-pub const rect = @import("nodes/rect.zig");
+pub const NodeArc = @import("nodes/arc.zig");
+pub const NodeFrameBuffer = @import("nodes/fb.zig");
+pub const NodeRect = @import("nodes/rect.zig");

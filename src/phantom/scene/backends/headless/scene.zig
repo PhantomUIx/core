@@ -22,9 +22,9 @@ pub fn new(options: Scene.Options) Allocator.Error!*HeadlessScene {
                 .sub = null,
                 .frameInfo = frameInfo,
                 .deinit = deinit,
-                .createNode = createNode,
             },
             .subscene = null,
+            .type = .headless,
         },
     };
     return self;
@@ -38,9 +38,4 @@ fn frameInfo(ctx: *anyopaque) Node.FrameInfo {
 fn deinit(ctx: *anyopaque) void {
     const self: *HeadlessScene = @ptrCast(@alignCast(ctx));
     self.base.allocator.destroy(self);
-}
-
-fn createNode(ctx: *anyopaque, typeName: []const u8, id: usize, args: std.StringHashMap(anyplus.Anytype)) anyerror!*Node {
-    _ = ctx;
-    return @import("../../../scene.zig").createNode(.headless, typeName, id, args);
 }

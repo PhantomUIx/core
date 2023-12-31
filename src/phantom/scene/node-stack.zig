@@ -8,6 +8,10 @@ const Node = @import("node.zig");
 const NodeTree = @import("node-tree.zig");
 const NodeStack = @This();
 
+pub const Options = struct {
+    children: ?[]const *Node,
+};
+
 tree: NodeTree,
 children: std.ArrayList(*Node),
 
@@ -26,22 +30,17 @@ pub inline fn init(comptime T: type, allocator: Allocator, id: ?usize, ptr: *any
     };
 }
 
-pub fn create(id: ?usize, args: std.StringHashMap(anyplus.Anytype)) !*Node {
-    var self = try new(args.allocator, id orelse @returnAddress());
-
-    if (args.get("children")) |children| {
-        try self.children.appendSlice(try children.cast([]*Node));
-    }
-    return &self.tree.node;
-}
-
-pub fn new(alloc: Allocator, id: ?usize) Allocator.Error!*NodeStack {
+pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node {
     const self = try alloc.create(NodeStack);
     self.* = .{
         .tree = init(NodeStack, alloc, id orelse @returnAddress(), self),
         .children = std.ArrayList(*Node).init(alloc),
     };
-    return self;
+
+    if (options.children) |children| {
+        try self.children.appendSlice(children);
+    }
+    return &self.tree.node;
 }
 
 fn impl_children(ctx: *anyopaque, _: Node.FrameInfo) anyerror!std.ArrayList(NodeTree.Child) {
