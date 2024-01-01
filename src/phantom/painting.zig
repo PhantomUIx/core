@@ -15,29 +15,33 @@ pub const BltOptions = struct {
     blend: vizops.color.BlendMode = .normal,
 };
 
-pub const RadiusSide = struct {
-    left: ?f32 = null,
-    right: ?f32 = null,
+pub fn Radius(comptime T: type) type {
+    return struct {
+        const Self = @This();
 
-    pub fn equal(self: RadiusSide, other: RadiusSide) bool {
-        return std.simd.countTrues(@Vector(2, bool){
-            self.left == other.left,
-            self.right == other.right,
-        }) == 2;
-    }
-};
+        top: ?Side = null,
+        bottom: ?Side = null,
 
-pub const Radius = struct {
-    top: ?RadiusSide = null,
-    bottom: ?RadiusSide = null,
+        pub fn equal(self: Self, other: Self) bool {
+            return std.simd.countTrues(@Vector(2, bool){
+                if (self.top == null and other.top != null) false else if (self.top != null and other.top == null) false else self.top.?.equal(other.top.?),
+                if (self.bottom == null and other.bottom != null) false else if (self.bottom != null and other.bottom == null) false else self.bottom.?.equal(other.bottom.?),
+            }) == 2;
+        }
 
-    pub fn equal(self: Radius, other: Radius) bool {
-        return std.simd.countTrues(@Vector(2, bool){
-            if (self.top == null and other.top != null) false else if (self.top != null and other.top == null) false else self.top.?.equal(other.top.?),
-            if (self.bottom == null and other.bottom != null) false else if (self.bottom != null and other.bottom == null) false else self.bottom.?.equal(other.bottom.?),
-        }) == 2;
-    }
-};
+        pub const Side = struct {
+            left: ?T = null,
+            right: ?T = null,
+
+            pub fn equal(self: Side, other: Side) bool {
+                return std.simd.countTrues(@Vector(2, bool){
+                    self.left == other.left,
+                    self.right == other.right,
+                }) == 2;
+            }
+        };
+    };
+}
 
 pub const fb = @import("painting/fb.zig");
 pub const image = @import("painting/image.zig");

@@ -41,7 +41,7 @@ pub fn line(self: *const Self, start: vizops.vector.UsizeVector2, end: vizops.ve
     var err = dx + dy;
 
     while (true) {
-        try self.setPixel(vizops.vector.UsizeVector2{ .value = [_]usize{ x0, y0 } }, buffer);
+        try self.setPixel(vizops.vector.UsizeVector2.init([_]usize{ x0, y0 }), buffer);
 
         if (x0 == x1 and y0 == y1) break;
 
@@ -65,59 +65,59 @@ pub fn line(self: *const Self, start: vizops.vector.UsizeVector2, end: vizops.ve
     }
 }
 
-pub fn arc(self: *const Self, pos: vizops.vector.UsizeVector2, angles: vizops.vector.Float32Vector2, radius: f32, buffer: []const u8) !void {
-    const startAngle = angles.value[0];
-    const endAngle = angles.value[1];
+pub fn arc(self: *const Self, pos: vizops.vector.UsizeVector2, angles: vizops.vector.UsizeVector2, radius: usize, buffer: []const u8) !void {
+    const startAngle = std.math.degreesToRadians(f32, std.math.lossyCast(f32, angles.value[0]));
+    const endAngle = std.math.degreesToRadians(f32, std.math.lossyCast(f32, angles.value[1]));
 
-    const center = vizops.vector.Float32Vector2.init([_]f32{
-        std.math.round(pos.cast(f32).value[0] - std.math.cos(startAngle) * radius),
-        std.math.round(pos.cast(f32).value[1] - std.math.sin(startAngle) * radius),
+    const center = vizops.vector.UsizeVector2.init([_]usize{
+        pos.value[0] - std.math.lossyCast(usize, @cos(startAngle) * std.math.lossyCast(f32, radius)),
+        pos.value[1] - std.math.lossyCast(usize, @sin(startAngle) * std.math.lossyCast(f32, radius)),
     });
 
-    var r: f32 = 0.0;
-    while (r <= radius) : (r += 1.0) {
+    var r: usize = 0;
+    while (r <= radius) : (r += 1) {
         var angle = startAngle;
-        while (angle <= endAngle) : (angle += 1.0 / r) {
-            const x = center.value[0] + std.math.round(r * @cos(angle));
-            const y = center.value[1] + std.math.round(r * @sin(angle));
+        while (angle <= endAngle) : (angle += if (r == 0) std.math.degreesToRadians(f32, 1.0) else std.math.degreesToRadians(f32, 1.0 / std.math.lossyCast(f32, r))) {
+            const x = center.value[0] + std.math.lossyCast(usize, std.math.lossyCast(f32, r) * @cos(angle));
+            const y = center.value[1] + std.math.lossyCast(usize, std.math.lossyCast(f32, r) * @sin(angle));
 
-            try self.setPixel(vizops.vector.Float32Vector2.init([_]f32{ x, y }).cast(usize), buffer);
+            try self.setPixel(vizops.vector.UsizeVector2.init([_]usize{ x, y }), buffer);
         }
     }
 }
 
-pub fn circle(self: *const Self, pos: vizops.vector.UsizeVector2, radius: f32, buffer: []const u8) !void {
+pub fn circle(self: *const Self, pos: vizops.vector.UsizeVector2, radius: usize, buffer: []const u8) !void {
     const circumferencePoint = vizops.vector.UsizeVector2.init([_]usize{ pos.value[0] + std.math.round(radius), pos.value[1] });
-    const fullCircle = vizops.vector.Float32Vector2.init([_]f32{ 0, 360 });
+    const fullCircle = vizops.vector.UsizeVector2.init([_]usize{ 0, 360 });
     try self.arc(circumferencePoint, fullCircle, radius, buffer);
 }
 
-pub fn rect(self: *const Self, pos: vizops.vector.UsizeVector2, size: vizops.vector.UsizeVector2, radius: painting.Radius, buffer: []const u8) !void {
+pub fn rect(self: *const Self, pos: vizops.vector.UsizeVector2, size: vizops.vector.UsizeVector2, radius: painting.Radius(usize), buffer: []const u8) !void {
     const x = pos.value[0];
     const y = pos.value[1];
     const width = size.value[0];
     const height = size.value[1];
 
-    const topLeftRadius = (if (radius.top) |top| top.left else null) orelse @as(f32, 0.0);
-    const topRightRadius = (if (radius.top) |top| top.right else null) orelse @as(f32, 0.0);
-    const bottomLeftRadius = (if (radius.bottom) |bottom| bottom.left else null) orelse @as(f32, 0.0);
-    const bottomRightRadius = (if (radius.bottom) |bottom| bottom.right else null) orelse @as(f32, 0.0);
+    const topLeftRadius = (if (radius.top) |top| top.left else null) orelse @as(usize, 0);
+    const topRightRadius = (if (radius.top) |top| top.right else null) orelse @as(usize, 0);
+    const bottomLeftRadius = (if (radius.bottom) |bottom| bottom.left else null) orelse @as(usize, 0);
+    const bottomRightRadius = (if (radius.bottom) |bottom| bottom.right else null) orelse @as(usize, 0);
 
     if (topLeftRadius > 0) {
-        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x, y }), vizops.vector.Float32Vector2.init([_]f32{ 180, 270 }), topLeftRadius, buffer);
+        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x, y }), vizops.vector.UsizeVector2.init([_]usize{ 180, 270 }), topLeftRadius, buffer);
     }
     if (topRightRadius > 0) {
-        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x + width, y }), vizops.vector.Float32Vector2.init([_]f32{ 270, 360 }), topRightRadius, buffer);
+        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x + width, y }), vizops.vector.UsizeVector2.init([_]usize{ 270, 360 }), topRightRadius, buffer);
     }
     if (bottomLeftRadius > 0) {
-        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x, y + height }), vizops.vector.Float32Vector2.init([_]f32{ 90, 180 }), bottomLeftRadius, buffer);
+        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x, y + height }), vizops.vector.UsizeVector2.init([_]usize{ 90, 180 }), bottomLeftRadius, buffer);
     }
     if (bottomRightRadius > 0) {
-        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x + width, y + height }), vizops.vector.Float32Vector2.init([_]f32{ 0, 90 }), bottomRightRadius, buffer);
+        try self.arc(vizops.vector.UsizeVector2.init([_]usize{ x + width, y + height }), vizops.vector.UsizeVector2.init([_]usize{ 0, 90 }), bottomRightRadius, buffer);
     }
 
-    const leftEdge = x + @as(usize, @intFromFloat(@max(topLeftRadius, bottomLeftRadius)));
-    const rightEdge = x + width - @as(usize, @intFromFloat(@max(topRightRadius, bottomRightRadius)));
+    const leftEdge = x + @max(topLeftRadius, bottomLeftRadius);
+    const rightEdge = x + width - @max(topRightRadius, bottomRightRadius);
     var i: usize = y;
     while (i < y + height) : (i += 1) {
         try self.line(vizops.vector.UsizeVector2.init([_]usize{ leftEdge, i }), vizops.vector.UsizeVector2.init([_]usize{ rightEdge, i }), buffer);

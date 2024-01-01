@@ -1,4 +1,5 @@
 const vizops = @import("vizops");
+const math = @import("../../math.zig");
 const painting = @import("../../painting.zig");
 const BaseScene = @import("../base.zig");
 
@@ -20,7 +21,7 @@ pub const NodeArc = @import("../nodes/arc.zig").NodeArc(struct {
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).arc(vizops.vector.UsizeVector2.zero(), self.options.angles, self.options.radius, buffer);
+        }).arc(vizops.vector.UsizeVector2.zero(), math.rel(scene.base.frameInfo(), self.options.angles), math.rel(scene.base.frameInfo(), vizops.vector.Float32Vector2.init(self.options.radius)).value[0], buffer);
     }
 });
 
@@ -54,9 +55,28 @@ pub const NodeRect = @import("../nodes/rect.zig").NodeRect(struct {
         defer self.node.allocator.free(buffer);
         try vizops.color.writeAnyBuffer(bufferInfo.colorFormat, buffer, self.options.color);
 
+        const radius = self.options.radius orelse painting.Radius(f32){};
+
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).rect(vizops.vector.UsizeVector2.zero(), size, self.options.radius orelse .{}, buffer);
+        }).rect(vizops.vector.UsizeVector2.zero(), size, .{
+            .top = if (radius.top) |top| blk: {
+                const v = vizops.vector.Float32Vector2.init([_]f32{ top.left orelse @as(f32, 0.0), top.right orelse @as(f32, 0.0) });
+                const r = math.rel(scene.base.frameInfo(), v);
+                break :blk .{
+                    .left = r.value[0],
+                    .right = r.value[1],
+                };
+            } else null,
+            .bottom = if (radius.bottom) |bottom| blk: {
+                const v = vizops.vector.Float32Vector2.init([_]f32{ bottom.left orelse @as(f32, 0.0), bottom.right orelse @as(f32, 0.0) });
+                const r = math.rel(scene.base.frameInfo(), v);
+                break :blk .{
+                    .left = r.value[0],
+                    .right = r.value[1],
+                };
+            } else null,
+        }, buffer);
     }
 });

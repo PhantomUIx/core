@@ -8,7 +8,7 @@ const Node = @import("../node.zig");
 const Scene = @import("../base.zig");
 
 pub const Options = struct {
-    radius: ?painting.Radius = null,
+    radius: ?painting.Radius(f32) = null,
     size: vizops.vector.Float32Vector2,
     color: vizops.color.Any,
 };
@@ -20,7 +20,7 @@ pub fn NodeRect(comptime Impl: type) type {
         const ImplScene = Impl.Scene;
 
         pub const State = struct {
-            radius: ?painting.Radius,
+            radius: ?painting.Radius(f32),
             color: vizops.color.Any,
             implState: ImplState,
 
