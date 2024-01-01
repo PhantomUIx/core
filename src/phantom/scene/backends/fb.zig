@@ -1,3 +1,4 @@
+const std = @import("std");
 const vizops = @import("vizops");
 const math = @import("../../math.zig");
 const painting = @import("../../painting.zig");
@@ -21,7 +22,7 @@ pub const NodeArc = @import("../nodes/arc.zig").NodeArc(struct {
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).arc(vizops.vector.UsizeVector2.zero(), self.options.angles, self.options.radius, buffer);
+        }).arc(vizops.vector.UsizeVector2.init([_]usize{std.math.lossyCast(f32, self.options.radius)}), self.options.angles, self.options.radius, buffer);
     }
 });
 
