@@ -3,11 +3,12 @@ const Allocator = std.mem.Allocator;
 const anyplus = @import("any+");
 const vizops = @import("vizops");
 const math = @import("../../math.zig");
+const painting = @import("../../painting.zig");
 const Node = @import("../node.zig");
 const Scene = @import("../base.zig");
 
 pub const Options = struct {
-    radius: ?f32 = 0.0,
+    radius: ?painting.Radius = null,
     size: vizops.vector.Float32Vector2,
     color: vizops.color.Any,
 };
@@ -19,7 +20,7 @@ pub fn NodeRect(comptime Impl: type) type {
         const ImplScene = Impl.Scene;
 
         pub const State = struct {
-            radius: ?f32,
+            radius: ?painting.Radius,
             color: vizops.color.Any,
             implState: ImplState,
 
@@ -35,7 +36,7 @@ pub fn NodeRect(comptime Impl: type) type {
 
             pub fn equal(self: *State, other: *State) bool {
                 return std.simd.countTrues(@Vector(3, bool){
-                    if (self.radius == null and other.radius != null) false else if (self.radius != null and other.radius == null) false else self.radius.? == other.radius.?,
+                    if (self.radius) |srd| if (other.radius) |ord| srd.equal(ord) else false else if (other.radius) |_| false else true,
                     self.color.equal(other.color),
                     if (ImplState != void) self.implState.equal(other.implState) else true,
                 }) == 3;

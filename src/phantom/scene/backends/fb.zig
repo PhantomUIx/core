@@ -11,10 +11,15 @@ pub const NodeArc = @import("../nodes/arc.zig").NodeArc(struct {
         const size = (try self.node.state(scene.base.frameInfo())).size;
         const pos: vizops.vector.UsizeVector2 = if (scene.base.subscene) |sub| sub.pos else .{};
 
+        const bufferInfo = scene.buffer.info();
+        const buffer = try self.node.allocator.alloc(u8, @divExact(bufferInfo.colorFormat.width(), 8));
+        defer self.node.allocator.free(buffer);
+        try vizops.color.writeAnyBuffer(bufferInfo.colorFormat, buffer, self.options.color);
+
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).fillArc(vizops.vector.UsizeVector2.zero(), size, @intFromFloat(self.options.radius * @as(f32, 360.0)), self.options.color);
+        }).arc(vizops.vector.UsizeVector2.zero(), self.options.angles, self.options.radius, buffer);
     }
 });
 
@@ -43,9 +48,14 @@ pub const NodeRect = @import("../nodes/rect.zig").NodeRect(struct {
         const size = (try self.node.state(scene.base.frameInfo())).size;
         const pos: vizops.vector.UsizeVector2 = if (scene.base.subscene) |sub| sub.pos else .{};
 
+        const bufferInfo = scene.buffer.info();
+        const buffer = try self.node.allocator.alloc(u8, @divExact(bufferInfo.colorFormat.width(), 8));
+        defer self.node.allocator.free(buffer);
+        try vizops.color.writeAnyBuffer(bufferInfo.colorFormat, buffer, self.options.color);
+
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).fillRect(vizops.vector.UsizeVector2.zero(), size, @intFromFloat((self.options.radius orelse @as(f32, 0.0)) * @as(f32, 360.0)), self.options.color);
+        }).rect(vizops.vector.UsizeVector2.zero(), size, self.options.radius orelse .{}, buffer);
     }
 });
