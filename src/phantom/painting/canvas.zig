@@ -34,7 +34,7 @@ pub fn line(self: *const Self, start: vizops.vector.UsizeVector2, end: vizops.ve
     const x1 = end.value[0];
     const y1 = end.value[1];
 
-    const dx = @abs(x1 - x0);
+    const dx = @max(x1, x0) - @min(x0, x1);
     const sx = if (x0 < x1) @as(isize, 1) else @as(isize, -1);
     const dy = @as(usize, @intCast(@as(isize, @intCast(@abs(y1 - y0))) * @as(isize, -1)));
     const sy = if (y0 < y1) @as(isize, 1) else @as(isize, -1);
