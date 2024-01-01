@@ -22,7 +22,7 @@ pub const NodeArc = @import("../nodes/arc.zig").NodeArc(struct {
         try painting.Canvas.init(scene.buffer, .{
             .size = size,
             .pos = pos,
-        }).arc(vizops.vector.UsizeVector2.init([_]usize{std.math.lossyCast(f32, self.options.radius)}), self.options.angles, self.options.radius, buffer);
+        }).arc(vizops.vector.UsizeVector2.init([_]usize{std.math.lossyCast(usize, self.options.radius)}), self.options.angles, self.options.radius, buffer);
     }
 });
 
