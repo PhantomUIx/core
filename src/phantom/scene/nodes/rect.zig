@@ -115,7 +115,7 @@ pub fn NodeRect(comptime Impl: type) type {
             const self: *Self = @ptrCast(@alignCast(ctx));
 
             if (@hasDecl(Impl, "preFrame")) {
-                try Impl.preFrame(self, frameInfo, @ptrCast(@alignCast(baseScene.ptr)));
+                try Impl.preFrame(self, frameInfo, @ptrCast(@alignCast(baseScene.ptr)), baseScene.subscene);
             }
 
             return .{
@@ -132,7 +132,7 @@ pub fn NodeRect(comptime Impl: type) type {
         fn frame(ctx: *anyopaque, baseScene: *Scene) anyerror!void {
             const self: *Self = @ptrCast(@alignCast(ctx));
             if (@hasDecl(Impl, "frame")) {
-                try Impl.frame(self, @ptrCast(@alignCast(baseScene.ptr)));
+                try Impl.frame(self, @ptrCast(@alignCast(baseScene.ptr)), baseScene.subscene);
             }
         }
 
