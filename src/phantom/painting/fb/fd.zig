@@ -29,7 +29,7 @@ pub fn create(alloc: Allocator, info: Base.Info, fd: std.os.fd_t) !*Base {
             .ptr = self,
         },
     };
-    errdefer std.os.munmap(self.fd, self.buffer);
+    errdefer std.os.munmap(self.buffer);
     return &self.base;
 }
 
@@ -63,6 +63,6 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
 
 fn impl_deinit(ctx: *anyopaque) void {
     const self: *FileDescriptorFrameBuffer = @ptrCast(@alignCast(ctx));
-    std.os.munmap(self.fd, self.buffer);
+    std.os.munmap(self.buffer);
     self.base.allocator.destroy(self);
 }
