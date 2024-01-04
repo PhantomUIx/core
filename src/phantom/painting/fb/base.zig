@@ -76,7 +76,7 @@ pub inline fn deinit(self: *Base) void {
     if (self.vtable.deinit) |f| f(self.ptr);
 }
 
-pub inline fn blt(self: *Base, mode: Blt, op: *Base, options: BltOptions) !void {
+pub fn blt(self: *Base, mode: Blt, op: *Base, options: BltOptions) !void {
     if (self.vtable.blt) |f| return f(self.ptr, mode, op, options);
 
     const src_info = switch (mode) {
