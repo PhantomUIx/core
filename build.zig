@@ -33,7 +33,7 @@ pub fn build(b: *std.Build) !void {
     const phantomOptions = b.addOptions();
     phantomOptions.addOption(bool, "no_importer", no_importer);
 
-    var phantomDeps = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
+    var phantomDeps = std.ArrayList(std.Build.Module.Import).init(b.allocator);
     errdefer phantomDeps.deinit();
 
     try phantomDeps.append(.{
@@ -166,8 +166,8 @@ pub fn build(b: *std.Build) !void {
     }
 
     const phantom = b.addModule("phantom", .{
-        .source_file = phantomSource.add("phantom.zig", rootSource),
-        .dependencies = phantomDeps.items,
+        .root_source_file = phantomSource.add("phantom.zig", rootSource),
+        .imports = phantomDeps.items,
     });
 
     const step_test = b.step("test", "Run all unit tests");
@@ -180,9 +180,9 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    unit_tests.addModule("vizops", vizops.module("vizops"));
-    unit_tests.addModule("meta+", metaplus.module("meta+"));
-    unit_tests.addModule("phantom.options", phantomOptions.createModule());
+    unit_tests.root_module.addImport("vizops", vizops.module("vizops"));
+    unit_tests.root_module.addImport("meta+", metaplus.module("meta+"));
+    unit_tests.root_module.addImport("phantom.options", phantomOptions.createModule());
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
@@ -200,9 +200,9 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    exe_example.addModule("phantom", phantom);
-    exe_example.addModule("vizops", vizops.module("vizops"));
-    exe_example.addOptions("options", exe_options);
+    exe_example.root_module.addImport("phantom", phantom);
+    exe_example.root_module.addImport("vizops", vizops.module("vizops"));
+    exe_example.root_module.addImport("options", exe_options.createModule());
     b.installArtifact(exe_example);
 
     const exe_example_libc = b.addExecutable(.{
@@ -215,9 +215,9 @@ pub fn build(b: *std.Build) !void {
         .link_libc = true,
     });
 
-    exe_example_libc.addModule("phantom", phantom);
-    exe_example_libc.addModule("vizops", vizops.module("vizops"));
-    exe_example_libc.addOptions("options", exe_options);
+    exe_example_libc.root_module.addImport("phantom", phantom);
+    exe_example_libc.root_module.addImport("vizops", vizops.module("vizops"));
+    exe_example_libc.root_module.addImport("options", exe_options.createModule());
     b.installArtifact(exe_example_libc);
 
     if (!no_docs) {
