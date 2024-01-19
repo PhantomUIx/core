@@ -116,7 +116,7 @@ pub fn build(b: *std.Build) !void {
                 }
             }
 
-            var iter = pkgdep.module(dep[0]).dependencies.iterator();
+            var iter = pkgdep.module(dep[0]).import_table.iterator();
             while (iter.next()) |entry| {
                 var alreadyExists = false;
                 for (phantomDeps.items) |i| {
