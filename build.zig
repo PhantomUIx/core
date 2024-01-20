@@ -225,6 +225,7 @@ pub fn build(b: *std.Build) !void {
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
+    b.installArtifact(unit_tests);
 
     const exe_options = b.addOptions();
     exe_options.addOption(DisplayBackendType, "display_backend", display_backend);

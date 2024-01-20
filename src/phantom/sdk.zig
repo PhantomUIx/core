@@ -8,41 +8,55 @@ pub const ModuleImport = struct {
     source: []const u8,
     dependencies: []const ModuleImport = &.{},
 
+    pub const Error = error{ MakeFailed, MakeSkipped } || std.mem.Allocator.Error;
+
     const b64Codec = std.base64.standard_no_pad;
 
-    pub fn init(value: []const std.Build.Module.Import, alloc: std.mem.Allocator) ![]const u8 {
+    pub fn init(value: []const std.Build.Module.Import, path: []const u8, alloc: std.mem.Allocator) ![]const u8 {
         const list = try initList(value, alloc);
         defer alloc.free(list);
-        return try encode(list, alloc);
+
+        const imports = try encode(list, alloc);
+        defer alloc.free(imports);
+
+        return try std.fmt.allocPrint(alloc, "{s}:{s}", .{ path, imports });
     }
 
-    pub fn initTable(tbl: std.StringArrayHashMapUnmanaged(*std.Build.Module), alloc: std.mem.Allocator) ![]const ModuleImport {
+    pub fn create(name: []const u8, module: *std.Build.Module) Error!ModuleImport {
+        if (module.root_source_file.? == .generated) {
+            var prog = std.Progress{};
+            var node = prog.start(name, 1);
+            defer node.end();
+
+            try module.root_source_file.?.generated.step.make(node);
+        }
+
+        return .{
+            .name = name,
+            .source = module.root_source_file.?.getPath(module.owner),
+            .dependencies = try initTable(module.import_table, module.owner.allocator),
+        };
+    }
+
+    pub fn initTable(tbl: std.StringArrayHashMapUnmanaged(*std.Build.Module), alloc: std.mem.Allocator) Error![]const ModuleImport {
         const value = try alloc.alloc(ModuleImport, tbl.count());
         errdefer alloc.free(value);
 
         var iter = tbl.iterator();
         var i: usize = 0;
         while (iter.next()) |entry| {
-            value[i] = .{
-                .name = entry.key_ptr.*,
-                .source = entry.value_ptr.*.root_source_file.?.getPath(entry.value_ptr.*.owner),
-                .dependencies = try initTable(entry.value_ptr.*.import_table, alloc),
-            };
+            value[i] = try create(entry.key_ptr.*, entry.value_ptr.*);
             i += 1;
         }
         return value;
     }
 
-    pub fn initList(list: []const std.Build.Module.Import, alloc: std.mem.Allocator) ![]const ModuleImport {
+    pub fn initList(list: []const std.Build.Module.Import, alloc: std.mem.Allocator) Error![]const ModuleImport {
         const value = try alloc.alloc(ModuleImport, list.len);
         errdefer alloc.free(value);
 
         for (list, 0..) |entry, i| {
-            value[i] = .{
-                .name = entry.name,
-                .source = entry.module.root_source_file.?.getPath(entry.module.owner),
-                .dependencies = try initTable(entry.module.import_table, alloc),
-            };
+            value[i] = try create(entry.name, entry.module);
         }
         return value;
     }
