@@ -3,6 +3,57 @@ const std = @import("std");
 const AvailableDep = struct { []const u8, []const u8 };
 const AvailableDeps = []const AvailableDep;
 
+pub const ModuleImport = struct {
+    name: []const u8,
+    source: []const u8,
+    dependencies: []const ModuleImport,
+
+    const b64Codec = std.base64.standard_no_pad;
+
+    pub fn decode(alloc: std.mem.Allocator, str: []const u8) !std.json.Parsed([]const ModuleImport) {
+        const buffer = try alloc.alloc(u8, try b64Codec.Decoder.calcSizeForSlice(str));
+        defer alloc.free(buffer);
+
+        try b64Codec.Decoder.decode(buffer, str);
+        return try std.json.parseFromSlice([]const ModuleImport, alloc, buffer, .{});
+    }
+
+    pub fn encode(list: []const ModuleImport, alloc: std.mem.Allocator) ![]const u8 {
+        const str = try std.json.stringifyAlloc(alloc, list, .{
+            .emit_null_optional_fields = false,
+            .whitespace = .minified,
+        });
+        defer alloc.free(str);
+
+        const buffer = try alloc.alloc(u8, try b64Codec.Encoder.calcSize(str));
+        errdefer alloc.free(buffer);
+
+        try b64Codec.Encoder.encode(buffer, str);
+        return buffer;
+    }
+
+    pub fn createModule(self: *const ModuleImport, b: *std.Build, target: ?std.Build.ResolvedTarget, optimize: ?std.builtin.OptimizeMode) !*std.Build.Module {
+        var imports = try std.ArrayList(std.Build.Module.Import).initCapacity(b.allocator, self.dependencies.len);
+        errdefer imports.deinit();
+
+        for (self.dependencies) |dep| {
+            imports.appendAssumeCapacity(.{
+                .name = dep.name,
+                .module = try dep.createModule(b, target, optimize),
+            });
+        }
+
+        return b.createModule(.{
+            .root_source_file = .{
+                .path = self.source,
+            },
+            .imports = imports.items,
+            .target = target,
+            .optimize = optimize,
+        });
+    }
+};
+
 pub const PhantomModule = struct {
     // TODO: expected version of core
     provides: ?Provides = null,

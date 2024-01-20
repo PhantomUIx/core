@@ -7,6 +7,65 @@ pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@imp
 pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
 pub const ImageFormatType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/painting/image/formats.zig")), Sdk.TypeFor(.imageFormats));
 
+fn addSourceFiles(
+    b: *std.Build,
+    fileOverrides: *std.StringHashMap([]const u8),
+    rootSource: *[]const u8,
+    phantomSource: *std.Build.Step.WriteFile,
+    rootPath: []const u8,
+) !void {
+    var depSourceRoot = try std.fs.openDirAbsolute(b.pathJoin(&.{ rootPath, "phantom" }), .{ .iterate = true });
+    defer depSourceRoot.close();
+
+    var walker = try depSourceRoot.walk(b.allocator);
+    defer walker.deinit();
+
+    while (try walker.next()) |entry| {
+        if (entry.kind == .directory) continue;
+
+        const entryPath = b.pathJoin(&.{ rootPath, "phantom", entry.path });
+        var entrySource = try Sdk.readAll(b.allocator, entryPath);
+        errdefer b.allocator.free(entrySource);
+
+        const entrypointRel = try std.fs.path.relative(b.allocator, std.fs.path.dirname(entryPath).?, b.pathJoin(&.{ rootPath, "phantom.zig" }));
+        defer b.allocator.free(entrypointRel);
+
+        const entrySourceOrig = entrySource;
+        entrySource = try std.mem.replaceOwned(u8, b.allocator, entrySourceOrig, "@import(\"phantom\")", b.fmt("@import(\"{s}\")", .{entrypointRel}));
+        b.allocator.free(entrySourceOrig);
+
+        if (fileOverrides.getPtr(entry.path)) |sourceptr| {
+            const fullSource = try Sdk.updateSource(b.allocator, sourceptr.*, entrySource);
+            errdefer b.allocator.free(fullSource);
+
+            b.allocator.free(sourceptr.*);
+            sourceptr.* = fullSource;
+        } else {
+            const origPath = b.pathFromRoot(b.pathJoin(&.{ "src/phantom", entry.path }));
+            if (Sdk.readAll(b.allocator, origPath) catch null) |origSource| {
+                defer b.allocator.free(origSource);
+
+                const fullSource = try Sdk.updateSource(b.allocator, origSource, entrySource);
+                errdefer b.allocator.free(fullSource);
+
+                try fileOverrides.put(try b.allocator.dupe(u8, entry.path), fullSource);
+                b.allocator.free(entrySource);
+            } else {
+                _ = phantomSource.add(b.pathJoin(&.{ "phantom", entry.path }), entrySource);
+            }
+        }
+    }
+
+    const src = try Sdk.readAll(b.allocator, b.pathJoin(&.{ rootPath, "phantom.zig" }));
+    defer b.allocator.free(src);
+
+    const fullSource = try Sdk.updateSource(b.allocator, rootSource.*, src);
+    errdefer b.allocator.free(fullSource);
+
+    b.allocator.free(rootSource.*);
+    rootSource.* = fullSource;
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -73,48 +132,8 @@ pub fn build(b: *std.Build) !void {
                 .@"no-importer" = true,
             });
 
-            const depSourceRootPath = b.pathJoin(&.{ pkg.build_root, "src/phantom" });
-            var depSourceRoot = try std.fs.openDirAbsolute(depSourceRootPath, .{ .iterate = true });
-            defer depSourceRoot.close();
-
-            var walker = try depSourceRoot.walk(b.allocator);
-            defer walker.deinit();
-
-            while (try walker.next()) |entry| {
-                if (entry.kind == .directory) continue;
-
-                const entryPath = b.pathJoin(&.{ depSourceRootPath, entry.path });
-                var entrySource = try Sdk.readAll(b.allocator, entryPath);
-                errdefer b.allocator.free(entrySource);
-
-                const entrypointRel = try std.fs.path.relative(b.allocator, std.fs.path.dirname(entryPath).?, b.pathJoin(&.{ pkg.build_root, "src/phantom.zig" }));
-                defer b.allocator.free(entrypointRel);
-
-                const entrySourceOrig = entrySource;
-                entrySource = try std.mem.replaceOwned(u8, b.allocator, entrySourceOrig, "@import(\"phantom\")", b.fmt("@import(\"{s}\")", .{entrypointRel}));
-                b.allocator.free(entrySourceOrig);
-
-                if (fileOverrides.getPtr(entry.path)) |sourceptr| {
-                    const fullSource = try Sdk.updateSource(b.allocator, sourceptr.*, entrySource);
-                    errdefer b.allocator.free(fullSource);
-
-                    b.allocator.free(sourceptr.*);
-                    sourceptr.* = fullSource;
-                } else {
-                    const origPath = b.pathFromRoot(b.pathJoin(&.{ "src/phantom", entry.path }));
-                    if (Sdk.readAll(b.allocator, origPath) catch null) |origSource| {
-                        defer b.allocator.free(origSource);
-
-                        const fullSource = try Sdk.updateSource(b.allocator, origSource, entrySource);
-                        errdefer b.allocator.free(fullSource);
-
-                        try fileOverrides.put(try b.allocator.dupe(u8, entry.path), fullSource);
-                        b.allocator.free(entrySource);
-                    } else {
-                        _ = phantomSource.add(b.pathJoin(&.{ "phantom", entry.path }), entrySource);
-                    }
-                }
-            }
+            const depSourceRootPath = b.pathJoin(&.{ pkg.build_root, "src" });
+            try addSourceFiles(b, &fileOverrides, &rootSource, phantomSource, depSourceRootPath);
 
             var iter = pkgdep.module(dep[0]).import_table.iterator();
             while (iter.next()) |entry| {
@@ -133,15 +152,35 @@ pub fn build(b: *std.Build) !void {
                     });
                 }
             }
+        }
+    }
 
-            const src = try Sdk.readAll(b.allocator, b.pathJoin(&.{ pkg.build_root, "src/phantom.zig" }));
-            defer b.allocator.free(src);
+    if (b.option([]const u8, "import-module", "inject a module to be imported")) |importModuleString| {
+        const modulePathLen = std.mem.indexOf(u8, importModuleString, ":") orelse importModuleString.len;
+        const modulePath = importModuleString[0..modulePathLen];
 
-            const fullSource = try Sdk.updateSource(b.allocator, rootSource, src);
-            errdefer b.allocator.free(fullSource);
+        try addSourceFiles(b, &fileOverrides, &rootSource, phantomSource, modulePath);
 
-            b.allocator.free(rootSource);
-            rootSource = fullSource;
+        if (modulePathLen < importModuleString.len) {
+            const imports = try Sdk.ModuleImport.decode(b.allocator, importModuleString[(modulePathLen + 1)..]);
+            defer imports.deinit();
+
+            for (imports.value) |dep| {
+                var alreadyExists = false;
+                for (phantomDeps.items) |i| {
+                    if (std.mem.eql(u8, i.name, dep.name)) {
+                        alreadyExists = true;
+                        break;
+                    }
+
+                    if (!alreadyExists or !std.mem.eql(u8, dep.name, "phantom")) {
+                        try phantomDeps.append(.{
+                            .name = dep.name,
+                            .module = try dep.createModule(b, target, optimize),
+                        });
+                    }
+                }
+            }
         }
     }
 
@@ -180,10 +219,9 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    unit_tests.root_module.addImport("any+", anyplus.module("any+"));
-    unit_tests.root_module.addImport("vizops", vizops.module("vizops"));
-    unit_tests.root_module.addImport("meta+", metaplus.module("meta+"));
-    unit_tests.root_module.addImport("phantom.options", phantomOptions.createModule());
+    for (phantomDeps.items) |dep| {
+        unit_tests.root_module.addImport(dep.name, dep.module);
+    }
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     step_test.dependOn(&run_unit_tests.step);
