@@ -66,7 +66,9 @@ pub const ModuleImport = struct {
         defer alloc.free(buffer);
 
         try b64Codec.Decoder.decode(buffer, str);
-        return try std.json.parseFromSlice([]const ModuleImport, alloc, buffer, .{});
+        return try std.json.parseFromSlice([]const ModuleImport, alloc, buffer, .{
+            .allocate = .alloc_always,
+        });
     }
 
     pub fn encode(list: []const ModuleImport, alloc: std.mem.Allocator) ![]const u8 {
