@@ -62,7 +62,7 @@ pub const ModuleImport = struct {
         });
         defer alloc.free(str);
 
-        const buffer = try alloc.alloc(u8, try b64Codec.Encoder.calcSize(str.len));
+        const buffer = try alloc.alloc(u8, b64Codec.Encoder.calcSize(str.len));
         errdefer alloc.free(buffer);
 
         try b64Codec.Encoder.encode(buffer, str);
