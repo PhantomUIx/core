@@ -6,9 +6,46 @@ const AvailableDeps = []const AvailableDep;
 pub const ModuleImport = struct {
     name: []const u8,
     source: []const u8,
-    dependencies: []const ModuleImport,
+    dependencies: []const ModuleImport = &.{},
 
     const b64Codec = std.base64.standard_no_pad;
+
+    pub fn init(value: []const std.Build.Module.Import, alloc: std.mem.Allocator) ![]const u8 {
+        const list = try initList(value, alloc);
+        defer alloc.free(list);
+        return try encode(list, alloc);
+    }
+
+    pub fn initTable(tbl: std.StringArrayHashMapUnmanaged(*std.Build.Module), alloc: std.mem.Allocator) ![]const ModuleImport {
+        const value = try alloc.alloc(ModuleImport, tbl.count());
+        errdefer alloc.free(value);
+
+        var iter = value.iterator();
+        var i: usize = 0;
+        while (iter.next()) |entry| {
+            value[i] = .{
+                .name = entry.name,
+                .source = entry.module.root_source_file.?.getPath(entry.module.owner),
+                .dependencies = try initTable(entry.module.import_table, alloc),
+            };
+            i += 1;
+        }
+        return value;
+    }
+
+    pub fn initList(list: []const std.Build.Module.Import, alloc: std.mem.Allocator) ![]const ModuleImport {
+        const value = try alloc.alloc(ModuleImport, list.len);
+        errdefer alloc.free(value);
+
+        for (list, 0..) |entry, i| {
+            value[i] = .{
+                .name = entry.name,
+                .source = entry.module.root_source_file.?.getPath(entry.module.owner),
+                .dependencies = try initTable(entry.module.import_table, alloc),
+            };
+        }
+        return value;
+    }
 
     pub fn decode(alloc: std.mem.Allocator, str: []const u8) !std.json.Parsed([]const ModuleImport) {
         const buffer = try alloc.alloc(u8, try b64Codec.Decoder.calcSizeForSlice(str));
