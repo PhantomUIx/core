@@ -24,9 +24,9 @@ pub const ModuleImport = struct {
         var i: usize = 0;
         while (iter.next()) |entry| {
             value[i] = .{
-                .name = entry.name,
-                .source = entry.module.root_source_file.?.getPath(entry.module.owner),
-                .dependencies = try initTable(entry.module.import_table, alloc),
+                .name = entry.key_ptr.*,
+                .source = entry.value_ptr.*.root_source_file.?.getPath(entry.value_ptr.*.owner),
+                .dependencies = try initTable(entry.value_ptr.*.import_table, alloc),
             };
             i += 1;
         }
