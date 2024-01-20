@@ -180,6 +180,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
+    unit_tests.root_module.addImport("any+", anyplus.module("any+"));
     unit_tests.root_module.addImport("vizops", vizops.module("vizops"));
     unit_tests.root_module.addImport("meta+", metaplus.module("meta+"));
     unit_tests.root_module.addImport("phantom.options", phantomOptions.createModule());
