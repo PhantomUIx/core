@@ -20,7 +20,7 @@ pub const ModuleImport = struct {
         const value = try alloc.alloc(ModuleImport, tbl.count());
         errdefer alloc.free(value);
 
-        var iter = value.iterator();
+        var iter = tbl.iterator();
         var i: usize = 0;
         while (iter.next()) |entry| {
             value[i] = .{
