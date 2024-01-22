@@ -10,11 +10,20 @@ const Scene = @This();
 pub const Target = union(enum) {
     surface: *GpuSurface,
     fb: *fb.Base,
+    any: struct {
+        value: anyplus.Anytype,
+        deinitFunc: ?*const fn (*const anyplus.Anytype) void = null,
+
+        pub fn deinit(self: *const @This()) void {
+            if (self.deinitFunc) |f| f(&self.value);
+        }
+    },
 
     pub fn deinit(self: Target) void {
         switch (self) {
             .surface => |s| s.deinit(),
             .fb => |f| f.deinit(),
+            .any => |a| a.deinit(),
         }
     }
 };
