@@ -25,6 +25,7 @@ pub fn new(options: Scene.Options) !*FbScene {
             });
         },
         .fb => |fb| try fb.dupe(),
+        else => return error.BadTarget,
     };
     errdefer buffer.deinit();
 
@@ -85,6 +86,7 @@ fn postFrame(ctx: *anyopaque, _: *Node, didWork: bool) anyerror!void {
         return switch (self.target) {
             .surface => |s| s.blt(.from, self.buffer, .{}),
             .fb => |f| f.blt(.from, self.buffer, .{}),
+            else => unreachable,
         };
     }
 }
