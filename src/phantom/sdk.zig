@@ -8,7 +8,7 @@ pub const ModuleImport = struct {
     source: []const u8,
     dependencies: []const ModuleImport = &.{},
 
-    pub const Error = error{ MakeFailed, MakeSkipped } || std.mem.Allocator.Error;
+    pub const Error = error{ MakeFailed, MakeSkipped } || std.mem.Allocator.Error || std.fs.File.OpenError || std.os.ReadError;
 
     const b64Codec = std.base64.standard_no_pad;
 
@@ -86,6 +86,8 @@ pub const ModuleImport = struct {
     }
 
     pub fn createModule(self: *const ModuleImport, b: *std.Build, target: ?std.Build.ResolvedTarget, optimize: ?std.builtin.OptimizeMode) !*std.Build.Module {
+        if (b.modules.get(self.name)) |value| return value;
+
         var imports = try std.ArrayList(std.Build.Module.Import).initCapacity(b.allocator, self.dependencies.len);
         errdefer imports.deinit();
 
@@ -96,7 +98,7 @@ pub const ModuleImport = struct {
             });
         }
 
-        return b.createModule(.{
+        const module = b.createModule(.{
             .root_source_file = .{
                 .path = self.source,
             },
@@ -104,6 +106,9 @@ pub const ModuleImport = struct {
             .target = target,
             .optimize = optimize,
         });
+
+        try b.modules.put(b.dupe(self.name), module);
+        return module;
     }
 };
 
