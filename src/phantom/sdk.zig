@@ -119,12 +119,14 @@ pub const PhantomModule = struct {
     pub const Provides = struct {
         scenes: ?[]const []const u8 = null,
         displays: ?[]const []const u8 = null,
+        platforms: ?[]const []const u8 = null,
         imageFormats: ?[]const []const u8 = null,
 
         pub fn value(self: Provides, kind: std.meta.FieldEnum(Provides)) []const []const u8 {
             return (switch (kind) {
                 .scenes => self.scenes,
                 .displays => self.displays,
+                .platforms => self.platforms,
                 .imageFormats => self.imageFormats,
             }) orelse &[_][]const u8{};
         }

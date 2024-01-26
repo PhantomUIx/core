@@ -4,6 +4,7 @@ const metap = @import("metaplus").@"meta+";
 pub const Sdk = @import("src/phantom/sdk.zig");
 
 pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
+pub const PlatformBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/platform/backends.zig")), Sdk.TypeFor(.platforms));
 pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
 pub const ImageFormatType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/painting/image/formats.zig")), Sdk.TypeFor(.imageFormats));
 
@@ -72,6 +73,7 @@ pub fn build(b: *std.Build) !void {
     const no_docs = b.option(bool, "no-docs", "skip installing documentation") orelse false;
     const no_importer = b.option(bool, "no-importer", "disables the import system (not recommended)") orelse false;
     const display_backend = b.option(DisplayBackendType, "display-backend", "The display backend to use for the example") orelse .headless;
+    const platform_backend = b.option(PlatformBackendType, "platform-backend", "The display backend to use for the example") orelse .std;
     const scene_backend = b.option(SceneBackendType, "scene-backend", "The scene backend to use for the example") orelse .headless;
 
     const vizops = b.dependency("vizops", .{
@@ -227,6 +229,7 @@ pub fn build(b: *std.Build) !void {
 
     const exe_options = b.addOptions();
     exe_options.addOption(DisplayBackendType, "display_backend", display_backend);
+    exe_options.addOption(PlatformBackendType, "platform_backend", platform_backend);
     exe_options.addOption(SceneBackendType, "scene_backend", scene_backend);
 
     const exe_example = b.addExecutable(.{

@@ -7,11 +7,19 @@ const vizops = @import("vizops");
 const displayBackendType: phantom.display.BackendType = @enumFromInt(@intFromEnum(options.display_backend));
 const displayBackend = phantom.display.Backend(displayBackendType);
 
+const platformBackendType: phantom.platform.BackendType = @enumFromInt(@intFromEnum(options.platform_backend));
+const platformBackend = phantom.platform.Backend(platformBackendType);
+
 const sceneBackendType: phantom.scene.BackendType = @enumFromInt(@intFromEnum(options.scene_backend));
 const sceneBackend = phantom.scene.Backend(sceneBackendType);
 
 pub fn main() !void {
     const alloc = if (builtin.link_libc) std.heap.c_allocator else std.heap.page_allocator;
+
+    var platform = try platformBackend.Backend.create(alloc);
+    defer platform.deinit();
+
+    // TODO: use platform to create an application
 
     var display = displayBackend.Display.init(alloc, .client);
     defer display.deinit();
