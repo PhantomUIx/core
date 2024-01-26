@@ -1,22 +1,21 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const Backend = @import("../../base.zig");
+const Sdk = @import("../../sdk.zig");
 const Self = @This();
 
-allocator: Allocator,
-base: Backend,
+base: Sdk,
 
-pub fn create(alloc: Allocator) !*Backend {
-    const self = try alloc.create(Self);
-    errdefer alloc.destroy(self);
+pub fn create(b: *std.Build) !*Sdk {
+    const self = try b.allocator.create(Self);
+    errdefer b.allocator.destroy(self);
 
     self.* = .{
-        .allocator = alloc,
         .base = .{
             .vtable = &.{
                 .deinit = deinit,
             },
             .ptr = self,
+            .owner = b,
         },
     };
     return &self.base;
@@ -24,5 +23,5 @@ pub fn create(alloc: Allocator) !*Backend {
 
 fn deinit(ctx: *anyopaque) void {
     const self: *Self = @ptrCast(@alignCast(ctx));
-    self.allocator.destroy(self);
+    self.base.owner.allocator.destroy(self);
 }

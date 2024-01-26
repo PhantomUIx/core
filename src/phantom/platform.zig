@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub const Base = @import("platform/base.zig");
+pub const Sdk = @import("platform/sdk.zig");
 
 pub const backends = @import("platform/backends.zig");
 pub const BackendType = std.meta.DeclEnum(backends);

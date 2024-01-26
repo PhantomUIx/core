@@ -232,6 +232,9 @@ pub fn build(b: *std.Build) !void {
     exe_options.addOption(PlatformBackendType, "platform_backend", platform_backend);
     exe_options.addOption(SceneBackendType, "scene_backend", scene_backend);
 
+    const sdk = try Sdk.get(b, platform_backend);
+    defer sdk.deinit();
+
     const exe_example = b.addExecutable(.{
         .name = "example",
         .root_source_file = .{

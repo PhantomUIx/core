@@ -7,7 +7,8 @@ pub const VTable = struct {
 
 vtable: *const VTable,
 ptr: *anyopaque,
+owner: *std.Build,
 
-pub inline fn deinit(self: *const Base) void {
+pub fn deinit(self: *const Base) void {
     if (self.vtable.deinit) |f| f(self.ptr);
 }
