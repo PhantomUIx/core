@@ -235,34 +235,26 @@ pub fn build(b: *std.Build) !void {
     const sdk = try Sdk.get(b, platform_backend);
     defer sdk.deinit();
 
-    const exe_example = b.addExecutable(.{
-        .name = "example",
-        .root_source_file = .{
-            .path = b.pathFromRoot("src/example.zig"),
+    const pkg_example = sdk.addPackage(.{
+        .id = "dev.phantomui.example",
+        .root_module = .{
+            .root_source_file = .{
+                .path = b.pathFromRoot("src/example.zig"),
+            },
+            .target = target,
+            .optimize = optimize,
         },
-        .target = target,
-        .optimize = optimize,
+        .kind = .application,
+        .version = .{
+            .major = 0,
+            .minor = 1,
+            .patch = 0,
+        },
     });
 
-    exe_example.root_module.addImport("phantom", phantom);
-    exe_example.root_module.addImport("vizops", vizops.module("vizops"));
-    exe_example.root_module.addImport("options", exe_options.createModule());
-    b.installArtifact(exe_example);
-
-    const exe_example_libc = b.addExecutable(.{
-        .name = "example-libc",
-        .root_source_file = .{
-            .path = b.pathFromRoot("src/example.zig"),
-        },
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-    });
-
-    exe_example_libc.root_module.addImport("phantom", phantom);
-    exe_example_libc.root_module.addImport("vizops", vizops.module("vizops"));
-    exe_example_libc.root_module.addImport("options", exe_options.createModule());
-    b.installArtifact(exe_example_libc);
+    pkg_example.root_module.addImport("phantom", phantom);
+    pkg_example.root_module.addImport("vizops", vizops.module("vizops"));
+    pkg_example.root_module.addImport("options", exe_options.createModule());
 
     if (!no_docs) {
         const docs = b.addInstallDirectory(.{
