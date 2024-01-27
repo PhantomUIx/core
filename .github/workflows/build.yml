@@ -1,0 +1,58 @@
+name: Build & Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    tags:
+      - "v*.*.*"
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-macos, aarch64-macos]
+        optimize: [ReleaseSmall, Debug]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+      - name: Build
+        run: |
+          zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
+      - name: Test
+        run: |
+          zig build test
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x86_64-windows, aarch64-windows]
+        optimize: [ReleaseSmall, Debug]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+      - name: Build
+        run: |
+          zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
+      - name: Test
+        run: |
+          zig build test
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-linux, aarch64-linux, riscv64-linux]
+        optimize: [ReleaseSmall, Debug]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+      - name: Build
+        run: |
+          zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
+      - name: Test
+        run: |
+          zig build test
