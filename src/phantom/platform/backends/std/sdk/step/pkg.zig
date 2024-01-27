@@ -12,11 +12,13 @@ pub fn create(sdk: *Sdk, options: Package.Options) !*Package {
     errdefer b.allocator.free(self);
 
     self.compile = std.Build.Step.Compile.create(b, .{
-        .name = options.id,
+        .name = options.name,
         .root_module = options.root_module,
         .version = options.version,
         .kind = .exe,
     });
+
+    self.compile.root_module.addImport("phantom", sdk.base.phantom);
 
     self.base.init(&sdk.base, options, make, &self.compile.root_module);
     self.base.step.dependOn(&self.compile.step);

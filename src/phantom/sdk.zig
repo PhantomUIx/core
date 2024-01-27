@@ -251,11 +251,11 @@ pub fn updateSource(alloc: std.mem.Allocator, a: []const u8, b: []const u8) ![]c
     return lines.items;
 }
 
-pub fn get(b: *std.Build, platform: anytype) !*@import("platform/sdk.zig") {
+pub fn get(b: *std.Build, platform: anytype, phantom: *std.Build.Module) !*@import("platform/sdk.zig") {
     const backends = @import("platform/backends.zig");
     inline for (comptime std.meta.declarations(backends)) |decl| {
         if (std.mem.eql(u8, decl.name, @tagName(platform))) {
-            return try @field(backends, decl.name).Sdk.create(b);
+            return try @field(backends, decl.name).Sdk.create(b, phantom);
         }
     }
 
@@ -266,7 +266,7 @@ pub fn get(b: *std.Build, platform: anytype) !*@import("platform/sdk.zig") {
             const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 if (buildZig.phantomModule.getProvider().has(.platform, @tagName(platform))) {
-                    return try @field(buildZig.phantomPlatform, @tagName(platform)).create(b);
+                    return try @field(buildZig.phantomPlatform, @tagName(platform)).create(b, phantom);
                 }
             }
         }

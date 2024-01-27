@@ -232,11 +232,12 @@ pub fn build(b: *std.Build) !void {
     exe_options.addOption(PlatformBackendType, "platform_backend", platform_backend);
     exe_options.addOption(SceneBackendType, "scene_backend", scene_backend);
 
-    const sdk = try Sdk.get(b, platform_backend);
+    const sdk = try Sdk.get(b, platform_backend, phantom);
     defer sdk.deinit();
 
     const pkg_example = sdk.addPackage(.{
         .id = "dev.phantomui.example",
+        .name = "example",
         .root_module = .{
             .root_source_file = .{
                 .path = b.pathFromRoot("src/example.zig"),
@@ -252,9 +253,10 @@ pub fn build(b: *std.Build) !void {
         },
     });
 
-    pkg_example.root_module.addImport("phantom", phantom);
     pkg_example.root_module.addImport("vizops", vizops.module("vizops"));
     pkg_example.root_module.addImport("options", exe_options.createModule());
+
+    sdk.installPackage(pkg_example);
 
     if (!no_docs) {
         const docs = b.addInstallDirectory(.{
