@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const Platform = @import("platform/sdk.zig");
+
 const AvailableDep = struct { []const u8, []const u8 };
 const AvailableDeps = []const AvailableDep;
 
