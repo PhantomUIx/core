@@ -1,0 +1,34 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: input
+    id: zig-version
+    attributes:
+      label: Zig Version
+      description: "The output of `zig version`"
+      placeholder: "0.10.0-dev.4583+875e98a57"
+    validations:
+      required: true
+  - type: input
+    id: phantom-version
+    attributes:
+      label: Phantom Version
+      description: "The commit in use"
+      placeholder: "13cb70007519475065743509e3a908c7105ded1d"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior
+    validations:
+      required: true
