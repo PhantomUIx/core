@@ -16,7 +16,7 @@ pub fn create(alloc: Allocator, info: Base.Info, fd: std.os.fd_t) !*Base {
     self.* = .{
         .info = info,
         .fd = fd,
-        .buffer = try std.os.mmap(null, info.res.value[0] * info.res.value[1] * @divExact(info.colorFormat.width(), 8), std.os.PROT.READ | std.os.PROT.WRITE, std.os.MAP.SHARED, fd, 0),
+        .buffer = try std.os.mmap(null, info.res.value[0] * info.res.value[1] * @divExact(info.colorFormat.width(), 8), std.os.PROT.READ | std.os.PROT.WRITE, std.os.MAP_TYPE.SHARED, fd, 0),
         .base = .{
             .allocator = alloc,
             .vtable = &.{
@@ -51,7 +51,7 @@ fn impl_dupe(ctx: *anyopaque) anyerror!*Base {
     d.* = .{
         .info = self.info,
         .fd = self.fd,
-        .buffer = try std.os.mmap(null, self.info.res.value[0] * self.info.res.value[1] * @divExact(self.info.colorFormat.width(), 8), std.os.PROT.READ | std.os.PROT.WRITE, std.os.MAP.SHARED, self.fd, 0),
+        .buffer = try std.os.mmap(null, self.info.res.value[0] * self.info.res.value[1] * @divExact(self.info.colorFormat.width(), 8), std.os.PROT.READ | std.os.PROT.WRITE, std.os.MAP_TYPE.SHARED, self.fd, 0),
         .base = .{
             .ptr = d,
             .allocator = self.base.allocator,
