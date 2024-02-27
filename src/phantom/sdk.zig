@@ -123,6 +123,7 @@ pub const PhantomModule = struct {
         displays: ?[]const []const u8 = null,
         platforms: ?[]const []const u8 = null,
         imageFormats: ?[]const []const u8 = null,
+        fonts: ?[]const []const u8 = null,
 
         pub fn value(self: Provides, kind: std.meta.FieldEnum(Provides)) []const []const u8 {
             return (switch (kind) {
@@ -130,6 +131,7 @@ pub const PhantomModule = struct {
                 .displays => self.displays,
                 .platforms => self.platforms,
                 .imageFormats => self.imageFormats,
+                .fonts => self.fonts,
             }) orelse &[_][]const u8{};
         }
 

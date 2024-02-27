@@ -4,6 +4,7 @@ const metap = @import("metaplus").@"meta+";
 pub const Sdk = @import("src/phantom/sdk.zig");
 
 pub const DisplayBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/display/backends.zig")), Sdk.TypeFor(.displays));
+pub const FontBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/fonts/backends.zig")), Sdk.TypeFor(.fonts));
 pub const PlatformBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/platform/backends.zig")), Sdk.TypeFor(.platforms));
 pub const SceneBackendType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/scene/backends.zig")), Sdk.TypeFor(.scenes));
 pub const ImageFormatType = metap.enums.fields.mix(metap.enums.fromDecls(@import("src/phantom/painting/image/formats.zig")), Sdk.TypeFor(.imageFormats));
