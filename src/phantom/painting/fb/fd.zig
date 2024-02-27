@@ -7,7 +7,7 @@ const FileDescriptorFrameBuffer = @This();
 base: Base,
 info: Base.Info,
 fd: std.os.fd_t,
-buffer: []align(std.mem.page_size) u8,
+buffer: @typeInfo(@typeInfo(@TypeOf(std.os.mmap)).Fn.return_type.?).ErrorUnion.payload,
 
 pub fn create(alloc: Allocator, info: Base.Info, fd: std.os.fd_t) !*Base {
     const self = try alloc.create(FileDescriptorFrameBuffer);
