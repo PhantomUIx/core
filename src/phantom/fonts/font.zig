@@ -12,7 +12,7 @@ pub const Glyph = struct {
 };
 
 pub const VTable = struct {
-    lookupGlyph: *const fn (*anyopaque, u21) anyerror!Glyph = null,
+    lookupGlyph: *const fn (*anyopaque, u21) anyerror!Glyph,
     getSize: *const fn (*anyopaque) vizops.vector.UsizeVector2,
     deinit: ?*const fn (*anyopaque) void = null,
 };
