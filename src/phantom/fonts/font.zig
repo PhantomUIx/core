@@ -6,9 +6,9 @@ const Self = @This();
 pub const Glyph = struct {
     index: u32,
     fb: *painting.fb.Base,
-    size: vizops.vector.Uint8Vector,
-    bearing: vizops.vector.Int8Vector,
-    advance: vizops.vector.Int8Vector,
+    size: vizops.vector.Uint8Vector2,
+    bearing: vizops.vector.Int8Vector2,
+    advance: vizops.vector.Int8Vector2,
 };
 
 pub const VTable = struct {
