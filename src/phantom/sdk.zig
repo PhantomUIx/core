@@ -119,7 +119,7 @@ pub const PhantomModule = struct {
     provides: ?Provides = null,
 
     pub const Provides = struct {
-        scenes: ?[]const []const u8 = null,
+        scenes: ?[]const [:0]const u8 = null,
         displays: ?[]const []const u8 = null,
         platforms: ?[]const []const u8 = null,
         imageFormats: ?[]const []const u8 = null,
@@ -217,7 +217,7 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
 
                 for (mod.getProvider().value(kind)) |name| {
                     fields[i] = .{
-                        .name = name,
+                        .name = @ptrCast(name ++ &[_]u8{0}),
                         .value = i,
                     };
                     i += 1;
@@ -268,9 +268,14 @@ pub fn get(b: *std.Build, platform: anytype, phantom: *std.Build.Module) !*@impo
         const pkg = @field(buildDeps.packages, dep[1]);
         if (@hasDecl(pkg, "build_zig")) {
             const buildZig = pkg.build_zig;
-            if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
-                if (buildZig.phantomModule.getProvider().has(.platform, @tagName(platform))) {
-                    return try @field(buildZig.phantomPlatform, @tagName(platform)).create(b, phantom);
+            if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule and @hasDecl(buildZig, "phantomPlatform")) {
+                if (buildZig.phantomModule.getProvider().has(.platforms, @tagName(platform))) {
+                    inline for (comptime std.mem.declarations(buildZig.phantomPlatform)) |decl| {
+                        if (std.mem.eql(u8, decl.name, @tagName(platform))) {
+                            return try @field(buildZig.phantomPlatform, decl.name).create(b, phantom);
+                        }
+                    }
+                    unreachable;
                 }
             }
         }
