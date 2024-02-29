@@ -5,6 +5,17 @@ pub const Platform = @import("platform/sdk.zig");
 const AvailableDep = struct { []const u8, []const u8 };
 const AvailableDeps = []const AvailableDep;
 
+fn runStep(step: *std.Build.Step, node: *std.Progress.Node) !void {
+    for (step.dependencies.items) |child| {
+        var childNode = node.start(child.name, child.dependencies.items.len);
+        defer childNode.end();
+
+        try runStep(child, &childNode);
+    }
+
+    try step.make(node);
+}
+
 pub const ModuleImport = struct {
     name: []const u8,
     source: []const u8,
@@ -30,7 +41,7 @@ pub const ModuleImport = struct {
             var node = prog.start(name, 1);
             defer node.end();
 
-            try module.root_source_file.?.generated.step.make(node);
+            try runStep(module.root_source_file.?.generated.step, node);
         }
 
         return .{
