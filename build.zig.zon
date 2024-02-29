@@ -1,19 +1,19 @@
 .{
-  .name = "phantom",
-  .version = "0.1.0",
-  .paths = .{"."},
-  .dependencies = .{
-    .vizops = .{
-      .url = "https://github.com/MidstallSoftware/vizops/archive/626d6bbf78fe7d192d0dea77abb7d99d272f7039.tar.gz",
-      .hash = "1220f1f74b130449d782e38792cbe5d6b519ff706dd4f260f8cb0ced10a1f03f8eab",
+    .name = "phantom",
+    .version = "0.1.0",
+    .paths = .{"."},
+    .dependencies = .{
+        .vizops = .{
+            .url = "https://github.com/MidstallSoftware/vizops/archive/cb7a23d02c3030056a59ff0cd856d95221e8da06.tar.gz",
+            .hash = "1220813b3d22d110b409ec8619fc1da2bc2ba2e71eb37b6a921ad228b485135793be",
+        },
+        .metaplus = .{
+            .url = "https://github.com/MidstallSoftware/meta-plus/archive/9f8c3828e3c4445b80185dd24eeb61d0386b23dc.tar.gz",
+            .hash = "122057d6a6bd7ba8b95fe67d91f584c4c0140ca26e8bea09b92f63b649dff470bf56",
+        },
+        .@"any+" = .{
+            .url = "https://github.com/MidstallSoftware/any-plus/archive/15e70210f0525fa619bfed533c1205ff57ac2100.tar.gz",
+            .hash = "12209b041a839e89ece510c07dbe62ad53b045ff0e6c44645cd1a3ea38f3b42905b9",
+        },
     },
-    .metaplus = .{
-      .url = "https://github.com/MidstallSoftware/meta-plus/archive/7a99d69a1d965e9598d9602ba4488babab50a6bf.tar.gz",
-      .hash = "122050a89efcff9674d40e4ba9f3bde81716cd982082a4725de3524318e2d9d69837",
-    },
-    .@"any+" = .{
-      .url = "https://github.com/MidstallSoftware/any-plus/archive/15e70210f0525fa619bfed533c1205ff57ac2100.tar.gz",
-      .hash = "12209b041a839e89ece510c07dbe62ad53b045ff0e6c44645cd1a3ea38f3b42905b9",
-    },
-  },
 }

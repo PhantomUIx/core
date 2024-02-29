@@ -169,7 +169,7 @@ pub fn NodeText(comptime Impl: type) type {
             var output = std.ArrayList(u8).init(self.node.allocator);
             errdefer output.deinit();
 
-            try output.writer().print("{{ .font = {}, .text = \"{s}\" }}", .{ self.options.font, self.options.view.bytes });
+            try output.writer().print("{{ .font = {}, .text = \"{s}\" }}", .{ self.options.font, std.unicode.fmtUtf8(self.options.view.bytes) });
             return output;
         }
     };
