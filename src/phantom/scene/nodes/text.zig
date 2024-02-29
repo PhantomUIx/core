@@ -25,14 +25,14 @@ pub fn NodeText(comptime Impl: type) type {
                 const self = try alloc.create(State);
                 self.* = .{
                     .font = options.font,
-                    .text = try alloc.dupe(u21, options.text),
+                    .view = options.view,
                     .implState = if (ImplState != void) ImplState.init(alloc, options) else {},
                 };
                 return self;
             }
 
             pub fn equal(self: *State, other: *State) bool {
-                return std.simd.countTrues(@Vector(2, bool){
+                return std.simd.countTrues(@Vector(3, bool){
                     self.font == other.font,
                     std.mem.eql(u8, self.view.bytes, other.view.bytes),
                     if (ImplState != void) self.implState.equal(other.implState) else true,
@@ -96,9 +96,14 @@ pub fn NodeText(comptime Impl: type) type {
             while (viewIter.nextCodepoint()) |cp| {
                 const glyph = try self.options.font.lookupGlyph(cp);
 
-                width += glyph.advance.value[0];
-                yMaxMin.value[0] = @max(yMaxMin.value[0], glyph.bearing.value[1]);
-                yMaxMin.value[1] = @min(yMaxMin.value[1], glyph.bearing.value[1] - glyph.size.value[1]);
+                width += @intCast(glyph.advance.value[0]);
+                yMaxMin.value[0] = @max(yMaxMin.value[0], @as(usize, @intCast(glyph.bearing.value[1])));
+
+                if (glyph.bearing.value[1] >= glyph.size.value[1]) {
+                    yMaxMin.value[1] = @min(yMaxMin.value[1], @as(usize, @intCast(glyph.bearing.value[1] - @as(i8, @intCast(glyph.size.value[1])))));
+                } else {
+                    yMaxMin.value[1] = @min(yMaxMin.value[1], @as(usize, @intCast(glyph.size.value[1] - glyph.size.value[1])));
+                }
             }
 
             return .{ .value = .{ width, yMaxMin.value[0] - yMaxMin.value[1] } };
@@ -164,7 +169,7 @@ pub fn NodeText(comptime Impl: type) type {
             var output = std.ArrayList(u8).init(self.node.allocator);
             errdefer output.deinit();
 
-            try output.writer().print("{{ .font = {}, .text = \"{}\" }}", .{ self.options.font, std.unicode.fmtUtf8(self.options.view.bytes) });
+            try output.writer().print("{{ .font = {}, .text = \"{s}\" }}", .{ self.options.font, self.options.view.bytes });
             return output;
         }
     };
