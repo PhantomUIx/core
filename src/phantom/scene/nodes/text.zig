@@ -88,7 +88,7 @@ pub fn NodeText(comptime Impl: type) type {
         }
 
         fn calcSize(self: *Self) !vizops.vector.UsizeVector2 {
-            var viewIter = self.option.view.iterator();
+            var viewIter = self.options.view.iterator();
 
             var width: usize = 0;
             var yMaxMin = vizops.vector.UsizeVector2.zero();
@@ -164,7 +164,7 @@ pub fn NodeText(comptime Impl: type) type {
             var output = std.ArrayList(u8).init(self.node.allocator);
             errdefer output.deinit();
 
-            try output.writer().print("{{ .font = {}, .text = \"{s}\" }}", .{ self.options.font, self.options.text });
+            try output.writer().print("{{ .font = {}, .text = \"{}\" }}", .{ self.options.font, std.unicode.fmtUtf8(self.options.view.bytes) });
             return output;
         }
     };

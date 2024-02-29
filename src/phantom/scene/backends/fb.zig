@@ -83,7 +83,7 @@ pub const NodeText = @import("../nodes/text.zig").NodeText(struct {
                 .destOffset = origin.add(startPos).add(.{
                     glyph.bearing.value[0],
                     -glyph.bearing.value[1],
-                }),
+                }).cast(usize),
                 .size = glyph.size,
             });
 
