@@ -72,8 +72,7 @@ pub const NodeText = @import("../nodes/text.zig").NodeText(struct {
     pub fn frame(self: *NodeText, scene: *Self.Scene, subscene: ?BaseScene.Sub) anyerror!void {
         const startPos: vizops.vector.UsizeVector2 = if (subscene) |sub| sub.pos else .{};
 
-        const view = try std.unicode.Utf8View.init(self.options.text);
-        var viewIter = view.iterator();
+        var viewIter = self.options.view.iterator();
 
         var origin = vizops.vector.UsizeVector2.zero();
 

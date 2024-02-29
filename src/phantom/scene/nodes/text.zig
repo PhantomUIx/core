@@ -7,7 +7,7 @@ const Node = @import("../node.zig");
 
 pub const Options = struct {
     font: *fonts.Font,
-    text: []const u21,
+    view: std.unicode.Utf8View,
 };
 
 pub fn NodeText(comptime Impl: type) type {
@@ -18,7 +18,7 @@ pub fn NodeText(comptime Impl: type) type {
 
         const State = struct {
             font: *fonts.Font,
-            text: []const u21,
+            view: std.unicode.Utf8View,
             implState: ImplState,
 
             pub fn init(alloc: Allocator, options: Options) Allocator.Error!*State {
@@ -34,14 +34,13 @@ pub fn NodeText(comptime Impl: type) type {
             pub fn equal(self: *State, other: *State) bool {
                 return std.simd.countTrues(@Vector(2, bool){
                     self.font == other.font,
-                    std.mem.eql(u8, self.text, other.text),
+                    std.mem.eql(u8, self.view.bytes, other.view.bytes),
                     if (ImplState != void) self.implState.equal(other.implState) else true,
                 }) == 2;
             }
 
             pub fn deinit(self: *State, alloc: Allocator) void {
                 if (ImplState != void) self.implState.deinit(alloc);
-                alloc.free(self.text);
                 alloc.destroy(self);
             }
         };
@@ -53,10 +52,7 @@ pub fn NodeText(comptime Impl: type) type {
         pub fn new(alloc: Allocator, id: ?usize, options: Options) Allocator.Error!*Node {
             const self = try alloc.create(Self);
             self.* = .{
-                .options = .{
-                    .font = options.font,
-                    .text = try alloc.dupe(u21, options.text),
-                },
+                .options = options,
                 .node = .{
                     .allocator = alloc,
                     .ptr = self,
@@ -92,8 +88,7 @@ pub fn NodeText(comptime Impl: type) type {
         }
 
         fn calcSize(self: *Self) !vizops.vector.UsizeVector2 {
-            const view = try std.unicode.Utf8View.init(self.options.text);
-            var viewIter = view.iterator();
+            var viewIter = self.option.view.iterator();
 
             var width: usize = 0;
             var yMaxMin = vizops.vector.UsizeVector2.zero();
@@ -160,7 +155,6 @@ pub fn NodeText(comptime Impl: type) type {
                 Impl.deinit(self);
             }
 
-            self.node.allocator.free(self.options.text);
             self.node.allocator.destroy(self);
         }
 
