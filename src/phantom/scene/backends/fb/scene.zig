@@ -79,14 +79,21 @@ fn postFrame(ctx: *anyopaque, _: *Node, didWork: bool) anyerror!void {
 
         if (self.target == .fb) {
             if (try self.target.fb.addr() == try self.buffer.addr()) {
+                try self.target.fb.commit();
                 return;
             }
         }
 
-        return switch (self.target) {
+        try switch (self.target) {
             .surface => |s| s.blt(.from, self.buffer, .{}),
             .fb => |f| f.blt(.from, self.buffer, .{}),
             else => unreachable,
         };
     }
+
+    try switch (self.target) {
+        .surface => {},
+        .fb => |f| f.commit(),
+        else => unreachable,
+    };
 }
