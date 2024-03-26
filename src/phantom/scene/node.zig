@@ -157,7 +157,7 @@ pub fn format(self: *const Node, comptime _: []const u8, options: std.fmt.Format
 }
 
 pub fn formatName(self: *const Node, optAlloc: ?std.mem.Allocator, writer: anytype) !void {
-    if (builtin.mode == .Debug and !builtin.strip_debug_info and @hasDecl(std.os.system, "getErrno") and @hasDecl(std.os.system, "fd_t")) {
+    if (builtin.mode == .Debug and !builtin.strip_debug_info and @hasDecl(std.posix, "errno") and @hasDecl(std.posix.system, "fd_t")) {
         const alloc = optAlloc orelse self.allocator;
         const debug = try std.debug.getSelfDebugInfo();
         const mod = try debug.getModuleForAddress(self.id);

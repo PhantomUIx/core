@@ -66,8 +66,8 @@ pub fn line(self: *const Self, start: vizops.vector.UsizeVector2, end: vizops.ve
 }
 
 pub fn arc(self: *const Self, pos: vizops.vector.UsizeVector2, angles: vizops.vector.Float32Vector2, radius: f32, buffer: []const u8) !void {
-    const startAngle = std.math.degreesToRadians(f32, angles.value[0]);
-    const endAngle = std.math.degreesToRadians(f32, angles.value[1]);
+    const startAngle = std.math.degreesToRadians(angles.value[0]);
+    const endAngle = std.math.degreesToRadians(angles.value[1]);
 
     const center = vizops.vector.UsizeVector2.init([_]usize{
         pos.value[0] - std.math.lossyCast(usize, @cos(startAngle) * radius),
