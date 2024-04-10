@@ -14,7 +14,7 @@ pub fn create(sdk: *Sdk, pkg: *Package) !*InstallPackage {
 
     self.base.init(&sdk.base, pkg, make);
 
-    const compile = @fieldParentPtr(@import("pkg.zig"), "base", pkg).compile;
+    const compile = @as(*@import("pkg.zig"), @fieldParentPtr("base", pkg)).compile;
     self.install = b.addInstallArtifact(compile, .{});
     self.base.step.dependOn(&self.install.step);
 

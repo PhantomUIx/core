@@ -26,8 +26,8 @@ pub fn create(sdk: *Sdk, options: Package.Options) !*Package {
 }
 
 fn make(step: *std.Build.Step, _: *std.Progress.Node) !void {
-    const pkgStep = @fieldParentPtr(Package, "step", step);
-    const self = @fieldParentPtr(Self, "base", pkgStep);
+    const pkgStep: *Package = @fieldParentPtr("step", step);
+    const self: *Self = @fieldParentPtr("base", pkgStep);
 
     pkgStep.output_file.path = step.owner.dupe(self.compile.generated_bin.?.path.?);
 }
