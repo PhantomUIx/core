@@ -4,15 +4,15 @@
     .paths = .{"."},
     .dependencies = .{
         .vizops = .{
-            .url = "https://gitlab.midstall.com/common/vizops/-/archive/cb7a23d02c3030056a59ff0cd856d95221e8da06/vizops-cb7a23d02c3030056a59ff0cd856d95221e8da06.tar.gz",
+            .url = "http://gitlab.midstall.com/common/vizops/-/archive/cb7a23d02c3030056a59ff0cd856d95221e8da06/vizops-cb7a23d02c3030056a59ff0cd856d95221e8da06.tar.gz",
             .hash = "1220813b3d22d110b409ec8619fc1da2bc2ba2e71eb37b6a921ad228b485135793be",
         },
         .metaplus = .{
-            .url = "https://gitlab.midstall.com/common/meta-plus/-/archive/9f8c3828e3c4445b80185dd24eeb61d0386b23dc/meta-plus-9f8c3828e3c4445b80185dd24eeb61d0386b23dc.tar.gz",
+            .url = "http://gitlab.midstall.com/common/meta-plus/-/archive/9f8c3828e3c4445b80185dd24eeb61d0386b23dc/meta-plus-9f8c3828e3c4445b80185dd24eeb61d0386b23dc.tar.gz",
             .hash = "122057d6a6bd7ba8b95fe67d91f584c4c0140ca26e8bea09b92f63b649dff470bf56",
         },
         .@"any+" = .{
-            .url = "https://gitlab.midstall.com/common/any-plus/-/archive/15e70210f0525fa619bfed533c1205ff57ac2100/any-plus-15e70210f0525fa619bfed533c1205ff57ac2100.tar.gz",
+            .url = "http://gitlab.midstall.com/common/any-plus/-/archive/15e70210f0525fa619bfed533c1205ff57ac2100/any-plus-15e70210f0525fa619bfed533c1205ff57ac2100.tar.gz",
             .hash = "12209b041a839e89ece510c07dbe62ad53b045ff0e6c44645cd1a3ea38f3b42905b9",
         },
     },
