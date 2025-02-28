@@ -1,38 +1,80 @@
 {
   description = "A truely cross platform GUI toolkit for Zig.";
 
-  nixConfig = rec {
-    trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ];
-    substituters = [ "https://cache.nixos.org" "https://cache.garnix.io" ];
-    trusted-substituters = substituters;
-    fallback = true;
-    http2 = false;
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    systems.url = "github:nix-systems/default";
+    zig-overlay.url = "github:mitchellh/zig-overlay";
   };
 
-  inputs.expidus-sdk = {
-    url = github:ExpidusOS/sdk;
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-parts,
+      systems,
+      zig-overlay,
+      ...
+    }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import systems;
 
-  inputs.nixpkgs.url = github:ExpidusOS/nixpkgs;
+      flake.overlays.default = final: prev: {
+        zig_0_15 = final.zigpkgs.master.overrideAttrs (
+          f: p: {
+            inherit (final.zig_0_13) meta;
 
-  inputs.zig-overlay.url = github:mitchellh/zig-overlay;
+            passthru.hook = final.callPackage "${nixpkgs}/pkgs/development/compilers/zig/hook.nix" {
+              zig = f.finalPackage;
+            };
+          }
+        );
+      };
 
-  outputs = { self, expidus-sdk, nixpkgs, zig-overlay }@inputs:
-    with expidus-sdk.lib;
-    flake-utils.eachSystem flake-utils.allSystems (system:
-      let
-        pkgs = expidus-sdk.legacyPackages.${system}.appendOverlays [
-          zig-overlay.overlays.default
-          (f: p: {
-            zig = f.zigpkgs.master;
-          })
-        ];
-      in {
-        devShells.default = pkgs.mkShell {
-          name = "expidus-phantom";
+      perSystem =
+        {
+          config,
+          pkgs,
+          system,
+          ...
+        }:
+        {
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [
+              self.overlays.default
+              zig-overlay.overlays.default
+            ];
+            config = { };
+          };
 
-          packages = with pkgs; [ zig ];
+          legacyPackages = pkgs;
+
+          devShells =
+            let
+              optionalPackage' =
+                pkgs: pkg: pkgs.lib.optional (pkgs.lib.meta.availableOn pkgs.hostPlatform pkg) pkg;
+              mkShell =
+                pkgs:
+                pkgs.mkShell {
+                  packages =
+                    let
+                      optionalPackage = optionalPackage' pkgs;
+                    in
+                    with pkgs;
+                    [
+                      buildPackages.zon2nix
+                      buildPackages.zig_0_14
+                    ];
+                };
+            in
+            {
+              default = mkShell pkgs;
+              cross-aarch64-linux = mkShell pkgs.pkgsCross.aarch64-multiplatform;
+              cross-x86_64-linux = mkShell pkgs.pkgsCross.gnu64;
+              cross-riscv64-linux = mkShell pkgs.pkgsCross.riscv64;
+            };
         };
-      });
+    };
 }

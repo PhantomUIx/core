@@ -1,19 +1,20 @@
 .{
-    .name = "phantom",
+    .name = .phantom,
     .version = "0.1.0",
     .paths = .{"."},
     .dependencies = .{
-        .vizops = .{
-            .url = "http://gitlab.midstall.com/common/vizops/-/archive/cb7a23d02c3030056a59ff0cd856d95221e8da06/vizops-cb7a23d02c3030056a59ff0cd856d95221e8da06.tar.gz",
-            .hash = "1220813b3d22d110b409ec8619fc1da2bc2ba2e71eb37b6a921ad228b485135793be",
+        .zigimg = .{
+            .url = "https://github.com/TUSF/zigimg/archive/256cf2655bb887a30c57d8cbc1b9590643f0a824.tar.gz",
+            .hash = "zigimg-0.1.0-lly-O3AVEQBq5UYuvW77W180h6v41vJ9WXtBhrbLwtNH",
         },
-        .metaplus = .{
-            .url = "http://gitlab.midstall.com/common/meta-plus/-/archive/9f8c3828e3c4445b80185dd24eeb61d0386b23dc/meta-plus-9f8c3828e3c4445b80185dd24eeb61d0386b23dc.tar.gz",
-            .hash = "122057d6a6bd7ba8b95fe67d91f584c4c0140ca26e8bea09b92f63b649dff470bf56",
+        .z2d = .{
+            .url = "https://github.com/vancluever/z2d/archive/67d2e2e1891cd467fb7cb7c072bcf33dae2589a4.tar.gz",
+            .hash = "z2d-0.6.2-j5P_HjzpCgBdWm_1K6nob_MIb5YQqW5zyUCX9B5QnUeZ",
         },
-        .@"any+" = .{
-            .url = "http://gitlab.midstall.com/common/any-plus/-/archive/15e70210f0525fa619bfed533c1205ff57ac2100/any-plus-15e70210f0525fa619bfed533c1205ff57ac2100.tar.gz",
-            .hash = "12209b041a839e89ece510c07dbe62ad53b045ff0e6c44645cd1a3ea38f3b42905b9",
+        .@"zig-wayland" = .{
+            .url = "https://codeberg.org/ifreund/zig-wayland/archive/f3c5d503e540ada8cbcb056420de240af0c094f7.tar.gz",
+            .hash = "wayland-0.4.0-dev-lQa1kjfIAQCmhhQu3xF0KH-94-TzeMXOqfnP0-Dg6Wyy",
         },
     },
+    .fingerprint = 0x6896f6aeaa10b7f9,
 }
