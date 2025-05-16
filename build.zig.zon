@@ -15,6 +15,10 @@
             .url = "https://codeberg.org/ifreund/zig-wayland/archive/f3c5d503e540ada8cbcb056420de240af0c094f7.tar.gz",
             .hash = "wayland-0.4.0-dev-lQa1kjfIAQCmhhQu3xF0KH-94-TzeMXOqfnP0-Dg6Wyy",
         },
+        .libdrm = .{
+            .url = "https://github.com/MidstallSoftware/libdrm.zig/archive/d020314c5fcd78d64bdeecda3a42d0e43522f9af.tar.gz",
+            .hash = "libdrm-0.1.0-iX14LQFJAQAEHpJCxO9os_WFkU-GVD1kuLKkWnGqQRxz",
+        },
     },
     .fingerprint = 0x6896f6aeaa10b7f9,
 }

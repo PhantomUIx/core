@@ -30,6 +30,15 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    if (target.result.os.tag == .linux) {
+        const libdrm = b.dependency("libdrm", .{
+            .target = target,
+            .optimize = optimize,
+        });
+
+        module.addImport("libdrm", libdrm.module("libdrm"));
+    }
+
     const autodoc_test = b.addObject(.{
         .name = "phantom",
         .root_module = module,
