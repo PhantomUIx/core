@@ -1,0 +1,41 @@
+"component:display":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/display/**/*
+            - lib/phantom/display.zig
+
+"component:fonts":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/fonts/**/*
+            - lib/phantom/fonts.zig
+
+"component:gpu":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/gpu/**/*
+            - lib/phantom/gpu.zig
+
+"component:graphics":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/graphics/**/*
+            - lib/phantom/graphics.zig
+
+"component:scene":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/scene/**/*
+            - lib/phantom/scene.zig
+
+"component:widgets":
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lib/phantom/widgets/**/*
+            - lib/phantom/widgets.zig
