@@ -3,14 +3,14 @@ const Connector = @import("Connector.zig");
 const Self = @This();
 
 pub const VTable = struct {
-    getConnectors: *const fn (*anyopaque) anyerror![]*Connector,
+    getConnectors: *const fn (*anyopaque) anyerror![]const *Connector,
     destroy: *const fn (*anyopaque) void,
 };
 
 ptr: *anyopaque,
 vtable: *const VTable,
 
-pub inline fn getConnectors(self: *Self) anyerror![]*Connector {
+pub inline fn getConnectors(self: *Self) anyerror![]const *Connector {
     return self.vtable.getConnectors(self.ptr);
 }
 
