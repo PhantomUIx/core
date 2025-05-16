@@ -19,13 +19,13 @@ jobs:
         optimize: [ReleaseSmall, Debug]
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v1
       - name: Build
         run: |
           zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
       - name: Test
         run: |
-          zig build test
+          zig build test -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
   windows:
     runs-on: windows-latest
     strategy:
@@ -34,13 +34,14 @@ jobs:
         optimize: [ReleaseSmall, Debug]
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v1
       - name: Build
         run: |
           zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
       - name: Test
+        if: ${{ startsWith(matrix.target, 'x86_64') }}
         run: |
-          zig build test
+          zig build test -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
   linux:
     runs-on: ubuntu-latest
     strategy:
@@ -49,10 +50,11 @@ jobs:
         optimize: [ReleaseSmall, Debug]
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v1
+      - uses: docker/setup-qemu-action@v3
       - name: Build
         run: |
           zig build -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
       - name: Test
         run: |
-          zig build test
+          zig build test -Dtarget=${{ matrix.target }} -Doptimize=${{ matrix.optimize }}
