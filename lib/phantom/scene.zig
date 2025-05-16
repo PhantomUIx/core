@@ -2,6 +2,7 @@
 
 pub const Properties = @import("scene/Properties.zig");
 pub const Renderer = @import("scene/Renderer.zig");
+pub const Path = @import("scene/Path.zig");
 
 pub const Node = union(enum) {
     container: Container,
@@ -30,4 +31,5 @@ test {
     _ = Properties;
     _ = Renderer;
     _ = Node;
+    _ = Path;
 }
